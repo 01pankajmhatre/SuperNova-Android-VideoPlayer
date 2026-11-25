@@ -1,0 +1,39 @@
+{
+  "version": 3,
+  "artifactType": {
+    "type": "APK",
+    "kind": "Directory"
+  },
+  "applicationId": "org.novastudio.player",
+  "variantName": "amazonDebug",
+  "elements": [
+    {
+      "type": "ONE_OF_MANY",
+      "filters": [
+        {
+          "filterType": "ABI",
+          "value": "armeabi-v7a"
+        }
+      ],
+      "attributes": [],
+      "versionCode": 2676107,
+      "versionName": "6.6.4-20261125.1007",
+      "outputFile": "org.novastudio.player-2676107-6.6.4-20261125.1007-amazon-armeabi-v7a-debug.apk"
+    },
+    {
+      "type": "ONE_OF_MANY",
+      "filters": [
+        {
+          "filterType": "ABI",
+          "value": "arm64-v8a"
+        }
+      ],
+      "attributes": [],
+      "versionCode": 2676107,
+      "versionName": "6.6.4-20261125.1007",
+      "outputFile": "org.novastudio.player-2676107-6.6.4-20261125.1007-amazon-arm64-v8a-debug.apk"
+    }
+  ],
+  "elementType": "File",
+  "minSdkVersionForDexing": 23
+}
