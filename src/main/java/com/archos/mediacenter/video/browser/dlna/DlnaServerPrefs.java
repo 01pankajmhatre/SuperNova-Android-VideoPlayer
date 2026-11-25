@@ -22,6 +22,7 @@ public final class DlnaServerPrefs {
     private static final String KEY_FOLDERS = "folders";
     private static final String KEY_AUTO_START = "auto_start";
     private static final String KEY_RUNNING = "running";
+    private static final String KEY_FILES_IN_ROOT = "files_in_root";
 
     public static final int DEFAULT_PORT = 8200;
 
@@ -75,6 +76,15 @@ public final class DlnaServerPrefs {
 
     public void setAutoStart(boolean autoStart) {
         mPrefs.edit().putBoolean(KEY_AUTO_START, autoStart).apply();
+    }
+
+    /** When on, the server's root lists the content of the shared folders directly (their videos and sub folders). */
+    public boolean isFilesInRoot() {
+        return mPrefs.getBoolean(KEY_FILES_IN_ROOT, false);
+    }
+
+    public void setFilesInRoot(boolean filesInRoot) {
+        mPrefs.edit().putBoolean(KEY_FILES_IN_ROOT, filesInRoot).apply();
     }
 
     /** Whether the user left the server switched on (it is started again at the next app start if auto start is on). */

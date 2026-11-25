@@ -103,6 +103,12 @@ public class DlnaServerFragment extends Fragment {
         auto.setOnCheckedChangeListener((b, checked) -> mPrefs.setAutoStart(checked));
         root.addView(auto);
 
+        CheckBox filesInRoot = new CheckBox(requireContext());
+        filesInRoot.setText(R.string.dlna_files_in_root);
+        filesInRoot.setChecked(mPrefs.isFilesInRoot());
+        filesInRoot.setOnCheckedChangeListener((b, checked) -> mPrefs.setFilesInRoot(checked));
+        root.addView(filesInRoot);
+
         // Folders
         root.addView(sectionTitle(R.string.dlna_shared_folders));
         mFolderList = new LinearLayout(requireContext());

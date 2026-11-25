@@ -318,7 +318,7 @@ final class DlnaHttpServer {
         int count = parseInt(tag(r.body, "RequestedCount"), 0);
         if (objectId == null) objectId = DlnaMediaTree.ROOT_ID;
 
-        DlnaMediaTree tree = new DlnaMediaTree(mContext, mPrefs.getFolders());
+        DlnaMediaTree tree = new DlnaMediaTree(mContext, mPrefs.getFolders(), mPrefs.isFilesInRoot());
         List<DlnaMediaTree.Node> nodes;
         int total;
         if ("BrowseMetadata".equals(flag)) {

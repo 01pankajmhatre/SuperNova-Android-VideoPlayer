@@ -749,6 +749,7 @@ public class CustomApplication extends Application implements DefaultLifecycleOb
     @Override
     public void onCreate() {
         super.onCreate();
+        com.archos.mediacenter.video.utils.AppUpdater.cleanupInstalled(this);
 
         /*
         StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder()

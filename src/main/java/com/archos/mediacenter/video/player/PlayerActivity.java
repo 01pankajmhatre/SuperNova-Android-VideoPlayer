@@ -3780,7 +3780,7 @@ public class PlayerActivity extends AppCompatActivity implements PlayerControlle
     }
 
     void showVideoInfos() {
-        mPlayerController.hide();
+        mPlayerController.hideKeepingButtonsRow();
 
         Class infoActivity = null;
 
@@ -3871,7 +3871,7 @@ public class PlayerActivity extends AppCompatActivity implements PlayerControlle
                     return;
                 boolean hasRatio = track.isExternal;
                 mDialog = new SubtitleDelayPickerDialog(this, this, mVideoInfo.subtitleDelay, mVideoInfo.subtitleRatio, hasRatio);
-                mPlayerController.hide();
+                mPlayerController.hideKeepingButtonsRow();
                 SubtitleDelayPickerDialog subtitleDelayPickerDialog = (SubtitleDelayPickerDialog) mDialog;
                 subtitleDelayPickerDialog.updateDelay(mVideoInfo.subtitleDelay);
                 break;
@@ -3879,7 +3879,7 @@ public class PlayerActivity extends AppCompatActivity implements PlayerControlle
                 mDialog = new SubtitleSettingsDialog(this, mSubtitleManager, this::showSubtitleMoreOptions,
                         mSubtitleInfoController.getVisibleHeight());
                 mPlayerController.hideSwipePillForPanel();
-                mPlayerController.hide();
+                mPlayerController.hideKeepingButtonsRow();
                 break;
             case DIALOG_AUDIO_DELAY:
                 if(PlayerService.sPlayerService!=null)
@@ -3896,7 +3896,7 @@ public class PlayerActivity extends AppCompatActivity implements PlayerControlle
                     audioPickerDialog.updateDelay(clampAudioDelayForPassthrough(PlayerService.sPlayerService.getAudioDelay()));
                 else
                     audioPickerDialog.updateDelay(clampAudioDelayForPassthrough(mPreferences.getInt(getString(R.string.save_delay_setting_pref_key), 0)));
-                mPlayerController.hide();
+                mPlayerController.hideKeepingButtonsRow();
                 break;
             case DIALOG_AUDIO_SPEED:
                 if(PlayerService.sPlayerService!=null)
@@ -3908,7 +3908,7 @@ public class PlayerActivity extends AppCompatActivity implements PlayerControlle
                     audioSpeedPickerDialog.updateSpeed(PlayerService.sPlayerService.getAudioSpeed());
                 else
                     audioSpeedPickerDialog.updateSpeed(mPreferences.getFloat(getString(R.string.save_audio_speed_setting_pref_key), 1.0f));
-                mPlayerController.hide();
+                mPlayerController.hideKeepingButtonsRow();
                 break;
             case DIALOG_NOT_ENOUGHT_SPACE:
                 mDialog = new AlertDialog.Builder(this)
@@ -3939,7 +3939,7 @@ public class PlayerActivity extends AppCompatActivity implements PlayerControlle
                 break;
             case DIALOG_BRIGHTNESS:
                 mDialog = new BrightnessDialog(this);
-                mPlayerController.hide();
+                mPlayerController.hideKeepingButtonsRow();
                 break;
             case DIALOG_CODEC_NOT_SUPPORTED:
                 // Show toast instead of plugin download dialog
@@ -4826,14 +4826,14 @@ public class PlayerActivity extends AppCompatActivity implements PlayerControlle
         log.info("onSettingsSelected: " + key);
         if (trackInfoController == mAudioInfoController && key == AUDIO_POPUP_MORE) {
             mAudioMoreOpen = true;
-            if (mPlayerController != null && mPlayerController.isMiniUi()) mPlayerController.hide();   // compact UI: more options hide the whole control area
+            if (mPlayerController != null && mPlayerController.isMiniUi()) mPlayerController.hideKeepingButtonsRow();   // compact UI: more options hide the whole control area
             // open after the audio popup has finished closing
             getWindow().getDecorView().post(this::showAudioMoreOptions);
             return true;
         }
         if (trackInfoController == mSubtitleInfoController && key == SUBTITLE_MENU_MORE) {
             mSubtitleMoreOpen = true;
-            if (mPlayerController != null && mPlayerController.isMiniUi()) mPlayerController.hide();   // compact UI: more options hide the whole control area
+            if (mPlayerController != null && mPlayerController.isMiniUi()) mPlayerController.hideKeepingButtonsRow();   // compact UI: more options hide the whole control area
             getWindow().getDecorView().post(this::showSubtitleMoreOptions);
             return true;
         }

@@ -11,6 +11,7 @@ import androidx.preference.SeekBarPreference;
 import androidx.preference.SwitchPreferenceCompat;
 
 import com.archos.mediacenter.video.R;
+import com.archos.mediacenter.video.utils.AppUpdater;
 import com.archos.mediacenter.video.player.PlaybackNotificationSettings;
 import com.archos.mediacenter.video.player.PlayerBrightnessManager;
 import com.archos.mediacenter.video.player.PlayerController;
@@ -215,6 +216,29 @@ public class PhoneHomeSettingsFragment extends PreferenceFragmentCompat {
 
         Preference refresh = addAction(library, R.string.phone_refresh_metadata, activity == null ? null : activity::refreshHomeMetadata);
         if (refresh != null) refresh.setDependency(AutoScrapeService.KEY_ENABLE_AUTO_SCRAP);
+
+        PreferenceCategory updates = addCategory(screen, R.string.phone_settings_updates);
+        Preference check = new Preference(requireContext());
+        check.setTitle(R.string.update_check_latest);
+        check.setSummary(R.string.update_check_latest_summary);
+        check.setOnPreferenceClickListener(item -> {
+            AppUpdater.checkLatestVersion(requireActivity());
+            return true;
+        });
+        updates.addPreference(check);
+        androidx.preference.EditTextPreference updateUrl = new androidx.preference.EditTextPreference(requireContext());
+        updateUrl.setKey(AppUpdater.PREF_UPDATE_URL);
+        updateUrl.setTitle(R.string.update_url_title);
+        updateUrl.setDialogMessage(R.string.update_url_dialog);
+        updateUrl.setDefaultValue(AppUpdater.DEFAULT_UPDATE_URL);
+        updateUrl.setSummaryProvider(pref -> AppUpdater.getConfiguredUrl(requireContext()));
+        updates.addPreference(updateUrl);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        AppUpdater.onResume(requireActivity());   // back from the installer: delete the downloaded APK
     }
 
     private Preference[] addStandardOptions(PreferenceCategory playback) {

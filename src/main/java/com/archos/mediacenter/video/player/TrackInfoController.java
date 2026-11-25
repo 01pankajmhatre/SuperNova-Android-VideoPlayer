@@ -353,6 +353,15 @@ public class TrackInfoController implements OnMenuItemClickListener, OnItemClick
             return 6;
         }
 
+        /**
+         * Some rows (separators, disabled settings, footer) are not enabled. Without this the list treats every
+         * row as selectable, so the D-pad stops on a separator first and reaching the next option takes two presses.
+         */
+        @Override
+        public boolean areAllItemsEnabled() {
+            return false;
+        }
+
         @Override
         public boolean isEnabled(int position) {
             if (position == getCount() - 1 && mPopupFooter != null) return false;
@@ -566,7 +575,7 @@ public class TrackInfoController implements OnMenuItemClickListener, OnItemClick
 
     private View mFitAnchor;   // set while the top centred popup is sized to its content
 
-    /** Sizes the top centred popup to its rows: no empty space below or beside them. */
+    /** Sizes the height of the top centred popup to its rows: no empty space below them. */
     private void fitTopPopup() {
         View anchor = mFitAnchor;
         if (mPopup == null || anchor == null) return;
@@ -575,14 +584,7 @@ public class TrackInfoController implements OnMenuItemClickListener, OnItemClick
         int maxWidth = Math.min(wanted, Math.max(1, anchor.getWidth() - Math.round(32 * density)));
         android.widget.FrameLayout holder = new android.widget.FrameLayout(mContext);
         int count = mTrackInfoAdapter.getCount();
-        int natural = 0;
-        for (int i = 0; i < count; i++) {
-            View row = mTrackInfoAdapter.getView(i, null, holder);
-            row.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
-                    View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
-            natural = Math.max(natural, row.getMeasuredWidth());
-        }
-        int width = Math.max(Math.min(natural, maxWidth), Math.min(maxWidth, Math.round(180 * density)));
+        int width = maxWidth;   // width stays as before; only the height follows the content
         int total = 0;
         for (int i = 0; i < count; i++) {
             View row = mTrackInfoAdapter.getView(i, null, holder);

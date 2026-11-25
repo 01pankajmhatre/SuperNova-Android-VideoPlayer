@@ -35,11 +35,18 @@ final class DlnaMediaTree {
     private final Context mContext;
     private final ContentResolver mResolver;
     private final List<DlnaServerPrefs.Folder> mFolders;
+    private final boolean mFilesInRoot;
 
     DlnaMediaTree(Context context, List<DlnaServerPrefs.Folder> folders) {
+        this(context, folders, false);
+    }
+
+    /** @param filesInRoot the root lists the content of the shared folders itself instead of the folders */
+    DlnaMediaTree(Context context, List<DlnaServerPrefs.Folder> folders, boolean filesInRoot) {
         mContext = context.getApplicationContext();
         mResolver = mContext.getContentResolver();
         mFolders = folders;
+        mFilesInRoot = filesInRoot;
     }
 
     Node rootNode() {
@@ -81,6 +88,20 @@ final class DlnaMediaTree {
     List<Node> children(String id) {
         List<Node> result = new ArrayList<>();
         if (ROOT_ID.equals(id)) {
+            if (mFilesInRoot) {
+                // the videos (and sub folders) of every shared folder, shown straight in the root
+                for (int i = 0; i < mFolders.size(); i++) {
+                    for (Node child : children("f" + i)) {
+                        child.parentId = ROOT_ID;
+                        result.add(child);
+                    }
+                }
+                Collections.sort(result, (a, b) -> {
+                    if (a.container != b.container) return a.container ? -1 : 1;
+                    return a.title.compareToIgnoreCase(b.title);
+                });
+                return result;
+            }
             for (int i = 0; i < mFolders.size(); i++) result.add(get("f" + i));
             return result;
         }

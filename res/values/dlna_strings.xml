@@ -9,6 +9,7 @@
     <string name="dlna_settings">Settings</string>
     <string name="dlna_server_name">Server name</string>
     <string name="dlna_auto_start">Start the server when the app opens</string>
+    <string name="dlna_files_in_root">Show video files in the server root (instead of the shared folders)</string>
     <string name="dlna_shared_folders">Shared folders</string>
     <string name="dlna_add_folder">Add folder</string>
     <string name="dlna_remove_folder">Remove folder</string>

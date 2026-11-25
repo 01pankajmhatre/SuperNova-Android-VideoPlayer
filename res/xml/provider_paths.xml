@@ -4,4 +4,5 @@
   <root-path name="storage_files" path="/storage/" />
   <root-path name="mount_files" path="/mnt/" />
   <external-cache-path name="subtitles" path="subtitles/" />
+  <cache-path name="updates" path="updates/" />
 </paths>

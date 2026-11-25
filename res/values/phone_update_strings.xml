@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="phone_settings_updates">Updates</string>
+    <string name="update_check_latest">Check Latest Version</string>
+    <string name="update_check_latest_summary">List the APK files at the update URL, download one and install it</string>
+    <string name="update_url_title">Update URL</string>
+    <string name="update_url_dialog">GitHub folder page (…/tree/branch/path) or a GitHub contents API url. Leave empty for the default.</string>
+    <string name="update_checking">Checking for versions…</string>
+    <string name="update_bad_url">The update URL is not a GitHub folder (…/tree/branch/path) or API url.</string>
+    <string name="update_failed">Update failed: %1$s</string>
+    <string name="update_none">No APK files found at the update URL.</string>
+    <string name="update_pick_title">Choose a version</string>
+    <string name="update_download_title">Download and install</string>
+    <string name="update_download_message">Download %1$s and install it? The downloaded file is deleted after the installation.</string>
+    <string name="update_download_install">Download</string>
+    <string name="update_downloading">Downloading…</string>
+    <string name="update_permission_title">Allow installing apps</string>
+    <string name="update_permission_message">Allow this app to install apps, then come back. The installation continues automatically.</string>
+    <string name="update_permission_open">Open settings</string>
+</resources>

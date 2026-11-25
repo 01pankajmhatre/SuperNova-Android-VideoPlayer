@@ -727,11 +727,7 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
             progress.setLayerGravity(i, android.view.Gravity.CENTER_VERTICAL);
         }
         seek.setProgressDrawable(progress);
-        android.graphics.drawable.StateListDrawable thumb = new android.graphics.drawable.StateListDrawable();
-        thumb.addState(new int[]{android.R.attr.state_pressed}, ytuiDot(18, color));
-        thumb.addState(new int[]{android.R.attr.state_focused}, ytuiDot(18, color));
-        thumb.addState(new int[]{}, ytuiDot(12, color));
-        seek.setThumb(thumb);
+        seek.setThumb(null);   // flat bar: no dot on the seek bar
         seek.setThumbOffset(0);
     }
 
@@ -743,6 +739,7 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
 
     /** Compact UI: while the video popup (fit / zoom / aspect ratio / decoder) is open, no control is shown. */
     public void hideWhileVideoPopupOpen() {
+        mKeepPlainRowOnShow = isPlainRowOpen();
         if (mSwipePillShowing) dismissSwipePillImmediately();
         cancelFadeOut();
         hide();
@@ -1157,6 +1154,39 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
             setMiniToggleBack(toggle, false);
         }
         sendFadeOut(SHOW_TIMEOUT);
+    }
+
+    private boolean mKeepPlainRowOnShow;
+
+    /**
+     * Compact UI: hides the controls for a popup / dialog opened from a button of the Controls button row.
+     * When the controls come back they show that row again instead of the playback row.
+     */
+    public void hideKeepingButtonsRow() {
+        mKeepPlainRowOnShow = isPlainRowOpen();
+        hide();
+    }
+
+    private boolean isPlainRowOpen() {
+        if (!mMiniUi || mControllerViewLeft == null) return false;
+        View bar = mControllerViewLeft.findViewById(R.id.button_bar);
+        View panel = bar == null ? null : bar.findViewWithTag("plain_panel");
+        return panel != null && panel.getVisibility() == View.VISIBLE;
+    }
+
+    /** Compact UI: closes the Controls button row (if open) so the playback button row is shown again. */
+    private void collapsePlainControls() {
+        if (!mMiniUi || mControllerViewLeft == null) return;
+        View bar = mControllerViewLeft.findViewById(R.id.button_bar);
+        if (!(bar instanceof RelativeLayout)) return;
+        View panel = bar.findViewWithTag("plain_panel");
+        if (panel == null || panel.getVisibility() != View.VISIBLE) return;
+        Object hidden = panel.getTag(R.id.mobile_controls_toggle);
+        if (hidden instanceof java.util.ArrayList) {
+            for (Object o : (java.util.ArrayList<?>) hidden) ((View) o).setVisibility(View.VISIBLE);
+        }
+        panel.setVisibility(View.GONE);
+        setMiniToggleBack(mControllerViewLeft.findViewById(R.id.mobile_controls_toggle), false);
     }
 
     /** Compact UI: while the row with all the buttons is open the Controls button is a Back button. */
@@ -2270,8 +2300,40 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
 
     private void setVisibility(final View view, boolean show, boolean doAnim) {
         if (mIsStopped) return;
+        if (doAnim && mMiniUi && view == mControlBar) {
+            animateMiniControls(view, show);
+            return;
+        }
         if (show) view.setVisibility(View.VISIBLE);
         else view.setVisibility(View.GONE);
+    }
+
+    /** Compact UI: the control area fades and slides up from the bottom when it opens, and back down when it closes. */
+    private void animateMiniControls(final View view, final boolean show) {
+        final float slide = 24 * mContext.getResources().getDisplayMetrics().density;
+        view.animate().cancel();
+        if (show) {
+            if (view.getVisibility() != View.VISIBLE) {
+                view.setAlpha(0f);
+                view.setTranslationY(slide);
+                view.setVisibility(View.VISIBLE);
+            }
+            view.animate().alpha(1f).translationY(0f).setDuration(220)
+                    .setInterpolator(new android.view.animation.DecelerateInterpolator()).start();
+        } else {
+            if (view.getVisibility() != View.VISIBLE) {
+                view.setVisibility(View.GONE);
+                return;
+            }
+            view.animate().alpha(0f).translationY(slide).setDuration(180)
+                    .setInterpolator(new android.view.animation.AccelerateInterpolator())
+                    .withEndAction(() -> {
+                        if (mControlBarShowing) return;          // opened again meanwhile: leave it
+                        view.setVisibility(View.GONE);
+                        view.setAlpha(1f);
+                        view.setTranslationY(0f);
+                    }).start();
+        }
     }
 
     private void showActionBar(boolean show) {
@@ -2317,6 +2379,12 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
         if (isSeekOnlyShowing() && !show) return;
         if (log.isDebugEnabled()) log.debug("showControlBar {}", show);
         if (show && !isTVMode && !TVUtils.isTV(mContext)) showSystemBar(false);
+        if (show && !mControlBarShowing) {
+            // compact UI: reopen on the playback row, except when coming back from the video popup that
+            // was opened from the Controls button row
+            if (mKeepPlainRowOnShow) mKeepPlainRowOnShow = false;
+            else collapsePlainControls();
+        }
         if (mControlBar != null && (mControlBarShowing != show
                 || mControlBar.getVisibility() != (show ? View.VISIBLE : View.GONE))) {
             if (log.isDebugEnabled()) log.debug("showControlBar {}", String.valueOf(show));

@@ -1,6 +1,6 @@
 bin
 gen
-build
+build/*
 .gradle
 .settings/
 local.properties
@@ -19,3 +19,12 @@ crowdin.yml
 captures/
 *.apk
 *.aab
+# Include only Amazon debug APK outputs
+!build/outputs/
+build/outputs/*
+!build/outputs/apk/
+build/outputs/apk/*
+!build/outputs/apk/amazon/
+build/outputs/apk/amazon/*
+!build/outputs/apk/amazon/debug/
+!build/outputs/apk/amazon/debug/**
