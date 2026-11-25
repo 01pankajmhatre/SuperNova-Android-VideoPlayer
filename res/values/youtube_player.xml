@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="YoutubePlayerControl" parent="Widget.AppCompat.Button.Borderless">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">48dp</item>
+        <item name="android:minWidth">48dp</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textColor">#FFFFFF</item>
+        <item name="android:foreground">@drawable/youtube_remote_focus</item>
+    </style>
+    <string name="youtube_quality">Quality</string>
+    <string name="youtube_captions">CC</string>
+    <string name="youtube_speed">Speed</string>
+    <string name="youtube_options">Playback options</string>
+    <string name="youtube_fullscreen">Fullscreen</string>
+    <string name="youtube_exit_fullscreen">Exit fullscreen</string>
+    <string name="youtube_auto">Auto</string>
+    <string name="youtube_off">Off</string>
+    <string name="youtube_views">%1$s views</string>
+    <string name="youtube_comments">Comments</string>
+    <string name="youtube_related">Related videos</string>
+    <string name="youtube_no_comments">No comments available</string>
+    <string name="youtube_no_related">No related videos available</string>
+    <string name="youtube_share">Share</string>
+    <string name="youtube_mute">Mute</string>
+    <string name="youtube_unmute">Unmute</string>
+    <string name="youtube_back">Back</string>
+    <string name="youtube_search_action">Search</string>
+    <string name="youtube_no_captions">No captions available</string>
+    <string name="youtube_popup">Popup</string>
+    <string name="youtube_download">Download</string>
+    <string name="youtube_download_failed">Could not start the download</string>
+    <string name="youtube_add_to">Add to</string>
+    <string name="youtube_subscribe">Subscribe</string>
+    <string name="youtube_subscribed">Subscribed</string>
+    <string name="youtube_open_video_setting">Open videos</string>
+    <string name="youtube_open_fullscreen">Open in fullscreen</string>
+    <string name="youtube_open_supernova">Open in SuperNova</string>
+    <string name="youtube_open_app">Open in YouTube app</string>
+    <string name="youtube_app_unavailable">Could not open the YouTube app. Change playback mode in YouTube Settings.</string>
+    <string name="youtube_save_changes">Save changes</string>
+</resources>

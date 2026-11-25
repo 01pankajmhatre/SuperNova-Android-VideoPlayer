@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="mobile_controls_padding_top">16dp</dimen>
+    <dimen name="mobile_controls_padding_bottom">0dp</dimen>
+    <dimen name="mobile_controls_title_height">28dp</dimen>
+    <dimen name="mobile_controls_seek_height">40dp</dimen>
+    <dimen name="mobile_controls_buttons_height">48dp</dimen>
+    <dimen name="mobile_controls_title_margin">16dp</dimen>
+    <dimen name="mobile_controls_row_margin">16dp</dimen>
+</resources>

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/phone_movie_card" android:layout_width="match_parent"
+    android:layout_height="wrap_content" android:orientation="vertical"
+    android:background="@drawable/phone_movie_card_background"
+    android:descendantFocusability="blocksDescendants">
+    <FrameLayout android:id="@+id/phone_movie_poster" android:layout_width="match_parent"
+        android:layout_height="216dp">
+        <ImageView android:id="@+id/thumbnail" android:layout_width="match_parent"
+            android:layout_height="match_parent" android:scaleType="centerCrop"
+            android:contentDescription="@null" />
+        <ImageView android:id="@+id/watched_status" android:layout_width="wrap_content"
+            android:layout_height="wrap_content" android:layout_gravity="top|end"
+            android:src="@drawable/watched_icon_corner" android:contentDescription="@null" />
+        <ImageView android:id="@+id/pinned_icon" android:layout_width="wrap_content"
+            android:layout_height="wrap_content" android:layout_gravity="top|start"
+            android:src="@drawable/pinned_icon_corner" android:contentDescription="@null" />
+        <ProgressBar android:id="@+id/resume_notif" style="@style/BrowserResumeSlider"
+            android:layout_width="match_parent" android:layout_height="4dp"
+            android:layout_gravity="bottom" android:indeterminate="false"
+            android:visibility="gone" />
+    </FrameLayout>
+    <TextView android:id="@+id/name" android:layout_width="match_parent"
+        android:layout_height="wrap_content" android:minLines="2" android:maxLines="2"
+        android:ellipsize="end" android:paddingStart="8dp" android:paddingEnd="8dp"
+        android:paddingTop="8dp" android:textSize="15sp" android:textColor="#FFFFFF" />
+    <TextView android:id="@+id/info" android:layout_width="match_parent"
+        android:layout_height="wrap_content" android:padding="8dp"
+        android:textSize="12sp" android:textColor="#BCC8D8" android:maxLines="1"
+        android:ellipsize="end" />
+</LinearLayout>

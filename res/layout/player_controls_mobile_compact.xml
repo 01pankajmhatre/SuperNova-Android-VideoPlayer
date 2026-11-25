@@ -1,0 +1,59 @@
+<?xml version='1.0' encoding='utf-8'?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:id="@+id/control_bar" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_alignParentBottom="true" android:background="@drawable/mobile_player_gradient" android:orientation="vertical" android:paddingTop="@dimen/mobile_controls_padding_top" android:paddingBottom="@dimen/mobile_compact_controls_padding_bottom" android:visibility="gone">
+    <LinearLayout
+        android:id="@+id/mobile_title_row"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/mobile_compact_seek_margin"
+        android:layout_marginEnd="@dimen/mobile_compact_seek_margin"
+        android:orientation="vertical">
+        <TextView
+            android:id="@+id/mobile_video_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:singleLine="true"
+            android:ellipsize="end"
+            android:textColor="#FFFFFF"
+            android:textSize="18sp" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+            <TextView
+                android:id="@+id/mobile_video_technical_info"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:singleLine="true"
+                android:ellipsize="end"
+                android:textColor="#CCFFFFFF"
+                android:textSize="11sp" />
+            <TextView
+                android:id="@+id/time_current"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingStart="8dp"
+                android:paddingTop="2dp"
+                android:paddingBottom="2dp"
+                android:singleLine="true"
+                android:textColor="#FFFFFF"
+                android:textSize="12sp" />
+            <ProgressBar android:id="@+id/seek_state" style="?android:attr/progressBarStyleSmall" android:layout_width="20dp" android:layout_height="20dp" android:layout_marginStart="8dp" android:visibility="gone" />
+        </LinearLayout>
+        <com.archos.mediacenter.video.player.TimeLabelSeekBar android:id="@+id/seek_progress" style="@style/PlayerSliderHorizontal" android:layout_width="match_parent" android:layout_height="22dp" android:maxHeight="3dp" android:minHeight="3dp" android:paddingStart="4dp" android:paddingEnd="4dp" android:paddingTop="4dp" android:paddingBottom="0dp" android:progressDrawable="@drawable/mobile_seek_progress" android:thumb="@drawable/mobile_seek_thumb" android:thumbOffset="0dp" android:splitTrack="false" android:contentDescription="@string/mobile_player_seek" />
+    </LinearLayout>
+    <RelativeLayout
+        android:id="@+id/button_bar"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/mobile_compact_controls_button_row_height"
+        android:layout_marginStart="@dimen/mobile_compact_pill_margin"
+        android:layout_marginEnd="@dimen/mobile_compact_pill_margin">
+        <include
+            layout="@layout/mobile_playback_controls_pill"
+            android:layout_width="wrap_content"
+            android:layout_height="@dimen/mobile_controls_buttons_height"
+            android:layout_centerHorizontal="true"
+            android:layout_alignParentBottom="true" />
+    </RelativeLayout>
+</LinearLayout>

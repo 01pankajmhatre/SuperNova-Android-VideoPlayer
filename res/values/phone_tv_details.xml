@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Settings (home page) > Movie details page -->
+    <string name="phone_details_style">Movie details page</string>
+    <string name="phone_details_style_standard">Standard phone page</string>
+    <string name="phone_details_style_tv">TV-style page (separate page, TV UI not affected)</string>
+    <!-- TV-style details page on the phone UI -->
+    <string name="tvdetails_more_info">More info</string>
+    <string name="tvdetails_director">Director: %1$s</string>
+    <string name="tvdetails_back">Back</string>
+
+    <style name="TvDetailsButton">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">44dp</item>
+        <item name="android:layout_marginEnd">10dp</item>
+        <item name="android:background">@drawable/tvd_button</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+        <item name="android:gravity">center</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:paddingStart">20dp</item>
+        <item name="android:paddingEnd">20dp</item>
+        <item name="android:textColor">#FFFFFF</item>
+        <item name="android:textSize">14sp</item>
+    </style>
+    <string name="phone_details_style_tvlayout2">TV layout page 2 (separate copy of the TV layout page)</string>
+    <string name="phone_details_style_alternate">Alternate page</string>
+    <string name="phone_details_style_tvlayout">TV layout page (the real TV details page: sources, trailers, posters, backdrops)</string>
+</resources>

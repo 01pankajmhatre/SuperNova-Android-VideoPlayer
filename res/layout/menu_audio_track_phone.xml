@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- Phone audio stream: full title followed by channel layout, codec and bitrate. -->
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:minWidth="@dimen/track_menu_minWidth"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:paddingTop="2dp"
+        android:paddingBottom="2dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="32dp" >
+    <RelativeLayout
+            android:layout_alignParentStart="true" android:layout_marginStart="8dp"
+            android:layout_toStartOf="@id/radio"
+            android:layout_centerVertical="true"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" >
+        <TextView android:id="@+id/name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textDirection="locale"
+                android:textColor="#FFFFFF"
+                android:textSize="12sp"
+                android:singleLine="true" android:ellipsize="end" />
+        <TextView android:id="@+id/summary"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/name"
+                android:layout_alignStart="@id/name"
+                android:textDirection="locale"
+                android:textColor="#9FB3D1"
+                android:textSize="12sp"
+                android:singleLine="true" android:ellipsize="end" />
+    </RelativeLayout>
+    <RadioButton android:id="@+id/radio" android:scaleX="0.92" android:scaleY="0.92"
+            android:layout_centerVertical="true"
+            android:layout_alignParentEnd="true"
+            android:focusable="false"
+            android:clickable="false"
+            android:buttonTint="#FFFFFF"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+</RelativeLayout>

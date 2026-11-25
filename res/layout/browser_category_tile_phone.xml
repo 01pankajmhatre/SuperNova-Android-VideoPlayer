@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="88dp"
+    android:layout_height="wrap_content"
+    android:layout_marginEnd="10dp"
+    android:layout_marginTop="5dp"
+    android:layout_marginBottom="5dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:orientation="vertical">
+    <com.archos.mediacenter.video.browser.SquareFrameLayout
+        android:id="@+id/tile_artwork"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#1F2B44"
+        android:duplicateParentState="true"
+        android:foreground="@drawable/mobile_tile_foreground">
+        <ImageView
+            android:id="@+id/tile_icon"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_gravity="center"
+            android:importantForAccessibility="no"
+            android:scaleType="fitCenter"
+            app:tint="#FFFFFF" />
+    </com.archos.mediacenter.video.browser.SquareFrameLayout>
+    <TextView
+        android:id="@+id/tile_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:ellipsize="end"
+        android:maxLines="2"
+        android:textColor="#FFFFFF"
+        android:textSize="11sp"
+        android:textStyle="bold" />
+</LinearLayout>

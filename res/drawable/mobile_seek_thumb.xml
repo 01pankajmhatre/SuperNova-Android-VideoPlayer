@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- No visible handle normally (like the reference player); a white handle while the remote's focus is on the seek bar.
+     The size tells TimeLabelSeekBar where to put the time label. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_focused="true">
+        <shape android:shape="oval">
+            <size android:width="16dp" android:height="16dp" />
+            <solid android:color="#FFFFFF" />
+        </shape>
+    </item>
+    <item>
+        <shape android:shape="oval">
+            <size android:width="14dp" android:height="14dp" />
+            <solid android:color="@android:color/transparent" />
+        </shape>
+    </item>
+</selector>

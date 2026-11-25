@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Selection of browser grids: clear white ring + light overlay for the remote's D-pad, light overlay when touched. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_focused="true" android:state_pressed="false"><shape android:shape="rectangle"><solid android:color="#26FFFFFF" /><stroke android:width="3dp" android:color="#FFFFFF" /></shape></item>
+    <item android:state_focused="true" android:state_pressed="true"><shape android:shape="rectangle"><solid android:color="#40FFFFFF" /><stroke android:width="3dp" android:color="#FFFFFF" /></shape></item>
+    <item android:state_pressed="true"><shape android:shape="rectangle"><solid android:color="#33FFFFFF" /></shape></item>
+    <item><shape android:shape="rectangle"><solid android:color="#00000000" /></shape></item>
+</selector>

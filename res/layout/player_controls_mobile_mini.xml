@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Compact phone controls (swapped in for player_controls_mobile by PlayerController when the
+     "Playback UI style" setting is "Compact"). Keeps the ids of the standard bar:
+       title (left) ................ elapsed / total (right)
+       full width timeline with the time above the playhead
+       [ backward  play  forward ] centred, "Controls" button on the right
+     The Controls button swaps the playback row for the subtitle / audio / video / more buttons. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/control_bar"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_alignParentBottom="true"
+    android:background="@drawable/mobile_player_gradient"
+    android:orientation="vertical"
+    android:paddingTop="@dimen/mobile_controls_padding_top"
+    android:paddingBottom="@dimen/mobile_controls_padding_bottom"
+    android:visibility="gone">
+
+    <LinearLayout
+        android:id="@+id/mobile_title_row"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/mobile_controls_title_track_margin"
+        android:layout_marginEnd="@dimen/mobile_controls_title_track_margin"
+        android:gravity="bottom"
+        android:orientation="horizontal">
+        <TextView
+            android:id="@+id/mobile_video_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:paddingEnd="12dp"
+            android:ellipsize="marquee"
+            android:gravity="start|center_vertical"
+            android:marqueeRepeatLimit="marquee_forever"
+            android:scrollHorizontally="true"
+            android:shadowColor="#99000000"
+            android:shadowRadius="3"
+            android:singleLine="true"
+            android:textAlignment="viewStart"
+            android:textColor="#FFFFFF"
+            android:textSize="20sp" />
+        <ProgressBar
+            android:id="@+id/seek_state"
+            style="?android:attr/progressBarStyleSmall"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_marginEnd="8dp"
+            android:visibility="gone" />
+        <!-- "elapsed / total"; tap toggles total <-> remaining -->
+        <TextView
+            android:id="@+id/time_current"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFeatureSettings="tnum"
+            android:layout_gravity="bottom"
+            android:gravity="end|bottom"
+            android:includeFontPadding="false"
+            android:shadowColor="#99000000"
+            android:shadowRadius="3"
+            android:singleLine="true"
+            android:textColor="#FFFFFF"
+            android:textSize="12sp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/mobile_seek_row"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/mobile_controls_seek_height"
+        android:layout_marginStart="@dimen/mobile_controls_title_track_margin"
+        android:layout_marginEnd="@dimen/mobile_controls_title_track_margin"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+        <com.archos.mediacenter.video.player.TimeLabelSeekBar
+            android:id="@+id/seek_progress"
+            style="@style/PlayerSliderHorizontal"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:maxHeight="4dp"
+            android:minHeight="4dp"
+            android:paddingStart="0dp"
+            android:paddingEnd="0dp"
+            android:paddingTop="@dimen/mobile_controls_seek_padding_top"
+            android:paddingBottom="0dp"
+            android:progressDrawable="@drawable/mobile_mini_seek_progress"
+            android:thumb="@drawable/mobile_seek_thumb"
+            android:thumbOffset="0dp"
+            android:splitTrack="false"
+            android:contentDescription="@string/mobile_player_seek" />
+    </LinearLayout>
+
+    <RelativeLayout
+        android:id="@+id/button_bar"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/mobile_controls_buttons_height"
+        android:layout_marginStart="@dimen/mobile_controls_title_track_margin"
+        android:layout_marginEnd="@dimen/mobile_controls_title_track_margin">
+        <LinearLayout
+            android:id="@+id/mobile_transport"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_centerInParent="true"
+            android:gravity="center"
+            android:orientation="horizontal">
+            <ImageButton
+                android:id="@+id/backward"
+                style="@style/MobilePlayerButton"
+                android:padding="8dp"
+                android:contentDescription="@string/mobile_player_backward"
+                app:srcCompat="@drawable/mobile_ic_rewind" />
+            <ImageButton
+                android:id="@+id/pause"
+                style="@style/MobilePlayerButton"
+                android:layout_marginStart="12dp"
+                android:layout_marginEnd="12dp"
+                android:padding="8dp"
+                android:contentDescription="@string/play_selection"
+                app:srcCompat="@drawable/mobile_ic_play" />
+            <ImageButton
+                android:id="@+id/forward"
+                style="@style/MobilePlayerButton"
+                android:padding="8dp"
+                android:contentDescription="@string/mobile_player_forward"
+                app:srcCompat="@drawable/mobile_ic_forward" />
+        </LinearLayout>
+        <!-- left aligned "List" button: episodes of the season, or the videos in the folder -->
+        <ImageButton
+            android:id="@+id/mobile_list"
+            style="@style/MobilePlayerButton"
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true"
+            android:contentDescription="@string/mobile_player_list"
+            app:srcCompat="@drawable/mobile_ic_list" />
+        <!-- right aligned "Controls" button (the pill's other buttons stay hidden) -->
+        <include
+            layout="@layout/mobile_playback_controls_pill"
+            android:layout_width="wrap_content"
+            android:layout_height="@dimen/mobile_controls_buttons_height"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true" />
+    </RelativeLayout>
+</LinearLayout>

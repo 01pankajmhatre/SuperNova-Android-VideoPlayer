@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- YouTube-style phone player controls + the "Playback UI style" setting. -->
+<resources>
+    <dimen name="mobile_ytui_margin">12dp</dimen>
+    <dimen name="mobile_ytui_gap">8dp</dimen>
+    <dimen name="mobile_ytui_seek_height">28dp</dimen>
+    <dimen name="mobile_ytui_controls_padding_bottom">8dp</dimen>
+
+    <string name="mobile_ytui_file_details">File details</string>
+    <string name="phone_player_style">Playback UI style</string>
+    <string name="phone_player_style_standard">Standard</string>
+    <string name="phone_player_style_compact">Compact</string>
+    <string name="phone_player_style_youtube">YouTube style</string>
+
+    <string name="phone_ytui_center_buttons">Buttons in the center</string>
+    <string name="phone_ytui_center_buttons_summary">YouTube style: show backward, play and forward in the middle of the screen (bigger play button) instead of the bottom row</string>
+    <string name="phone_ytui_pill_opacity">Pill opacity</string>
+    <string name="phone_ytui_pill_opacity_summary">YouTube style: opacity of the pills behind the buttons, time and title</string>
+    <string name="phone_ytui_seek_color">Seek bar color</string>
+
+    <string-array name="phone_ytui_seek_color_entries">
+        <item>Red</item>
+        <item>White</item>
+        <item>Blue</item>
+        <item>Green</item>
+        <item>Orange</item>
+        <item>Yellow</item>
+        <item>Purple</item>
+        <item>Pink</item>
+        <item>Cyan</item>
+    </string-array>
+    <string-array name="phone_ytui_seek_color_values">
+        <item>#FF0000</item>
+        <item>#FFFFFF</item>
+        <item>#2196F3</item>
+        <item>#4CAF50</item>
+        <item>#FF9800</item>
+        <item>#FFEB3B</item>
+        <item>#9C27B0</item>
+        <item>#E91E63</item>
+        <item>#00BCD4</item>
+    </string-array>
+</resources>

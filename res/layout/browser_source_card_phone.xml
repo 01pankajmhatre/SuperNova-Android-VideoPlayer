@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Select Source card with details inside the artwork and a title below it. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="@dimen/phone_home_card_width"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:layout_marginEnd="10dp"
+    android:layout_marginTop="5dp"
+    android:layout_marginBottom="5dp"
+    android:clickable="true"
+    android:focusable="true">
+    <FrameLayout
+        android:id="@+id/tile_artwork"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/phone_home_card_width"
+        android:background="@drawable/source_card_background"
+        android:duplicateParentState="true"
+        android:foreground="@drawable/mobile_tile_foreground">
+        <ImageView
+            android:id="@+id/tile_icon"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_gravity="center"
+            android:importantForAccessibility="no"
+            android:scaleType="fitCenter"
+            app:tint="#FFFFFF" />
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="28dp"
+            android:layout_gravity="bottom"
+            android:background="@drawable/source_card_scrim" />
+        <TextView
+            android:id="@+id/tile_subtitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="6dp"
+            android:layout_marginBottom="3dp"
+            android:gravity="center"
+            android:ellipsize="end"
+            android:lineSpacingExtra="0dp"
+            android:maxLines="2"
+            android:textColor="#CCFFFFFF"
+            android:textSize="10sp" />
+        <ImageView
+            android:id="@+id/tile_pin"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_gravity="top|end"
+            android:layout_marginTop="2dp"
+            android:layout_marginEnd="8dp"
+            android:importantForAccessibility="no"
+            android:src="@drawable/ic_source_bookmark"
+            android:visibility="gone" />
+    </FrameLayout>
+    <TextView
+        android:id="@+id/tile_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:ellipsize="end"
+        android:gravity="center"
+        android:maxLines="1"
+        android:textColor="#FFFFFF"
+        android:textSize="11sp"
+        android:textStyle="bold" />
+</LinearLayout>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/mobile_compact_pill"
+    android:layout_width="wrap_content"
+    android:layout_height="@dimen/mobile_controls_buttons_height"
+    android:paddingStart="8dp"
+    android:paddingEnd="8dp"
+    android:background="@drawable/mobile_controls_pill_bar">
+    <ImageButton
+        android:id="@+id/mobile_controls_toggle"
+        style="@style/MobilePlayerButton"
+        android:layout_gravity="center"
+        android:contentDescription="@string/phone_controls_toggle"
+        app:srcCompat="@drawable/mobile_ic_controls" />
+    <HorizontalScrollView android:id="@+id/mobile_compact_actions" android:layout_width="wrap_content" android:layout_height="@dimen/mobile_controls_buttons_height" android:fillViewport="true" android:scrollbars="none" android:visibility="gone">
+        <LinearLayout android:layout_width="wrap_content" android:layout_height="match_parent" android:orientation="horizontal" android:gravity="end">
+            <ImageButton android:id="@+id/mobile_more" style="@style/MobilePlayerButton" app:srcCompat="@drawable/mobile_player_more" android:contentDescription="@string/mobile_player_more" />
+            <ImageButton android:id="@+id/mobile_video_fit" style="@style/MobilePlayerButton" app:srcCompat="@drawable/ic_display_settings_24" android:contentDescription="@string/phone_video_menu" />
+            <ImageButton android:id="@+id/mobile_audio" style="@style/MobilePlayerButton" app:srcCompat="@drawable/mobile_ic_audio" android:contentDescription="@string/menu_audio" />
+            <ImageButton android:id="@+id/mobile_subtitles" style="@style/MobilePlayerButton" app:srcCompat="@drawable/mobile_ic_subtitle" android:contentDescription="@string/menu_subtitles" />
+            <ImageButton android:id="@+id/mobile_audio_channels" style="@style/MobilePlayerButton" android:padding="11dp" app:srcCompat="@drawable/ic_audio_channels" android:contentDescription="@string/audio_channels_title" />
+            <ImageButton android:id="@+id/mobile_night_mode" style="@style/MobilePlayerButton" app:srcCompat="@drawable/ic_night_mode_off" android:contentDescription="@string/mobile_player_night_mode" />
+            <ImageButton android:id="@+id/mobile_controls_close" style="@style/MobilePlayerButton" app:srcCompat="@android:drawable/ic_menu_close_clear_cancel" android:contentDescription="@string/phone_controls_close" />
+        </LinearLayout>
+    </HorizontalScrollView>
+</FrameLayout>

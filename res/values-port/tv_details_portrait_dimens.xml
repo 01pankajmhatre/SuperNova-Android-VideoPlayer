@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingDefaultResource">
+    <!--
+        TV details screen (leanback) in portrait, i.e. on a phone: cards and rows use the full width
+        instead of the wide side margins made for a TV. Landscape (TV) values are not touched.
+    -->
+    <dimen name="lb_details_overview_margin_start">0dp</dimen>
+    <dimen name="lb_details_overview_margin_end">0dp</dimen>
+    <dimen name="lb_details_v2_left">12dp</dimen>
+    <dimen name="lb_details_v2_logo_margin_start">12dp</dimen>
+    <dimen name="lb_details_v2_description_margin_end">12dp</dimen>
+    <dimen name="lb_browse_padding_start">12dp</dimen>
+    <dimen name="lb_browse_padding_end">12dp</dimen>
+    <dimen name="lb_browse_rows_margin_start">0dp</dimen>
+    <dimen name="lb_browse_rows_margin_end">0dp</dimen>
+    <!-- smaller poster and a taller header card, so the title, plot and buttons do not overlap on a narrow screen -->
+    <dimen name="details_poster_width">100dip</dimen>
+    <dimen name="details_poster_height">150dip</dimen>
+    <dimen name="lb_details_v2_card_height" tools:override="true">340dp</dimen>
+</resources>

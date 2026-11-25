@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="mobile_controls_padding_top">32dp</dimen>
+    <dimen name="mobile_controls_padding_bottom">4dp</dimen>
+    <dimen name="mobile_controls_title_height">28dp</dimen>
+    <dimen name="mobile_controls_seek_height">40dp</dimen>
+    <dimen name="mobile_controls_buttons_height">44dp</dimen>
+    <dimen name="mobile_controls_title_margin">20dp</dimen>
+    <dimen name="mobile_controls_row_margin">20dp</dimen>
+    <dimen name="mobile_controls_seek_padding_top">26dp</dimen>
+    <dimen name="mobile_controls_buttons_margin_top">8dp</dimen>
+    <dimen name="mobile_controls_title_track_margin">24dp</dimen>
+    <dimen name="mobile_controls_pill_end_margin">62dp</dimen>
+    <dimen name="mobile_controls_top_title_margin">6dp</dimen>
+    <dimen name="mobile_controls_top_title_padding">8dp</dimen>
+    <dimen name="mobile_compact_controls_padding_bottom">18dp</dimen>
+    <dimen name="mobile_compact_seek_margin">32dp</dimen>
+    <dimen name="mobile_compact_pill_margin">36dp</dimen>
+    <dimen name="mobile_compact_controls_button_row_height">48dp</dimen>
+</resources>

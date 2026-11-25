@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="grid_all">All</string>
+    <string name="grid_in_progress">In progress</string>
+    <string name="grid_watched">Watched</string>
+    <string name="grid_unwatched">Unwatched</string>
+    <string name="grid_search_hint">Search</string>
+    <string name="grid_empty">Nothing to show</string>
+    <string name="home_poster_page">Movies and TV shows grid page</string>
+    <string name="home_poster_page_on">Library Movies and TV shows open the poster grid page</string>
+    <string name="home_poster_page_off">Library shows them as a row above the cards</string>
+    <string name="home_movies_shows">Movies and TV shows</string>
+    <string name="home_combined_grid">Movies and TV shows grid on Home</string>
+    <string name="home_combined_grid_on">One grid with movies and TV shows replaces their two rows</string>
+    <string name="home_combined_grid_off">Movies and TV shows in separate rows</string>
+    <string name="home_sources_row_title">Sources</string>
+    <string name="list_resume_at">Resume at %1$s</string>
+    <string name="list_played">Played</string>
+    <string name="list_added_on">Added %1$s</string>
+    <string name="grid_list_view">List view</string>
+    <string name="grid_grid_view">Grid view</string>
+    <string name="library_banner_list">Banner list for Movies and TV shows</string>
+    <string name="library_banner_list_summary">Library Movies and TV shows pages show wide backdrop rows with the year and title on them instead of the poster grid</string>
+    <string name="library_banner_text_align">Banner text position</string>
+    <string name="align_left">Left</string>
+    <string name="align_center">Center</string>
+    <string name="align_right">Right</string>
+    <string name="files_network_sources">Network Sources</string>
+    <string name="files_host_dlna">Host DLNA</string>
+</resources>

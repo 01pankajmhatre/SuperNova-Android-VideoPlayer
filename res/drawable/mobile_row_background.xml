@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- VideoPlayer-style list row: #1A2438 card with a 4dp gap below, lighter when pressed/focused. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_pressed="true"><inset android:insetBottom="4dp"><shape android:shape="rectangle"><solid android:color="#344A65" /></shape></inset></item>
+    <item android:state_focused="true"><inset android:insetBottom="4dp"><shape android:shape="rectangle"><solid android:color="#344A65" /><stroke android:width="3dp" android:color="#FFFFFF" /></shape></inset></item>
+    <item><inset android:insetBottom="4dp"><shape android:shape="rectangle"><solid android:color="#1A2438" /></shape></inset></item>
+</selector>

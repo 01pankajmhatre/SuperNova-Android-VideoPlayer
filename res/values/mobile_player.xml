@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="mobile_player_back">Back</string>
+    <string name="mobile_player_night_mode">Night mode (dim interface)</string>
+    <string name="mobile_player_backward">Seek backward</string>
+    <string name="mobile_player_forward">Seek forward</string>
+    <string name="mobile_player_display">Display format</string>
+    <string name="mobile_player_cutout">Fill display cutouts</string>
+    <string name="mobile_player_more">More playback options</string>
+    <string name="mobile_player_seek">Video position</string>
+    <string name="mobile_player_times">%1$s / %2$s</string>
+    <bool name="playback_notification_rules_supported">false</bool>
+    <string name="playback_show_notification_banners">Show notifications over video</string>
+    <string name="playback_silence_notifications">Silence notifications</string>
+    <string name="playback_notifications_summary">Hiding banners also silences them. Calls and alarms follow your Android settings.</string>
+    <string name="playback_notifications_access_required">Allow SuperNova Do Not Disturb access in Android Settings to change notifications during playback.</string>
+    <string name="playback_notifications_rule">SuperNova playback</string>
+    <string name="phone_standard_title_position">Title position</string>
+    <string name="phone_standard_title_above_seekbar">Above the seek bar</string>
+    <string name="phone_standard_title_button_row">Left of the playback buttons</string>
+    <string name="phone_standard_title_top">Top of the screen</string>
+    <string name="phone_standard_title_below">Below the seek bar and buttons</string>
+    <string name="phone_standard_title_outline">Title outline</string>
+    <string name="phone_standard_title_shadow">Playback shadow</string>
+    <string name="phone_standard_playback_shadow_summary">Add shadow to the title, seek bar, and playback times.</string>
+    <string name="phone_standard_title_size">Title size (sp)</string>
+    <string name="phone_standard_title_status">Show battery and clock</string>
+    <string name="phone_standard_title_background">Title row background</string>
+    <string name="phone_audio_more_options">More options</string>
+    <string name="phone_audio_options_title">Audio options</string>
+    <string name="phone_standard_no_button_pill">Disable button pill</string>
+    <string name="phone_standard_no_button_pill_summary">Show night mode, video, audio, subtitle and more as a plain row of buttons, without the pill, plus a Controls button that swaps the row for subtitle, audio, video and more</string>
+    <string name="phone_standard_title_charging">%1$s ⚡</string>
+    <string name="phone_standard_title_battery">Battery %1$s</string>
+    <string name="phone_standard_title_battery_charging">Battery %1$s, charging</string>
+    <string name="phone_standard_tap_zones">Double-tap to seek or play/pause</string>
+    <string name="phone_standard_tap_zones_summary">Double-tap left to seek back, right to seek forward, or the center to play or pause (compact UI: single tap in the center).</string>
+    <style name="MobilePlayerButton" parent="PlayerControlButton">
+        <item name="android:layout_width">44dp</item>
+        <item name="android:layout_height">44dp</item>
+        <item name="android:padding">10dp</item>
+        <item name="android:scaleType">fitCenter</item>
+        <item name="android:background">@drawable/mobile_press_circle</item>
+    </style>
+    <string name="mobile_player_volume">Show volume level</string>
+    <string name="mobile_player_volume_step_title">Volume step size</string>
+    <string name="mobile_player_volume_step_message">Choose how many device volume levels each volume-button press changes during mobile playback.</string>
+    <string-array name="mobile_player_volume_step_entries">
+        <item>1 level</item>
+        <item>2 levels</item>
+        <item>3 levels</item>
+        <item>5 levels</item>
+        <item>10 levels</item>
+    </string-array>
+    <string-array name="mobile_player_volume_step_values">
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>5</item>
+        <item>10</item>
+    </string-array>
+    <string name="phone_subtitle_show_more">More…</string>
+    <string name="phone_subtitle_show_less">Less</string>
+    <string name="phone_subtitle_options_title">Subtitle options</string>
+    <string name="phone_subtitle_custom_font">Custom font…</string>
+    <string name="phone_subtitle_custom_font_active">Custom font: %1$s</string>
+    <string name="phone_subtitle_default_font">Use default font</string>
+    <string name="phone_subtitle_font_applied">Subtitle font: %1$s</string>
+    <string name="phone_subtitle_font_invalid">Not a usable font file (.ttf, .otf or .ttc)</string>
+    <string name="subtitle_panel_reset_value">Reset to default</string>
+    <string name="phone_gesture_swipe_seek">Swipe to seek</string>
+    <string name="phone_gesture_swipe_seek_summary">Swipe left or right on the video to seek</string>
+    <string name="phone_home_sources_row">Select Source row: cards</string>
+    <string name="phone_home_rows">Home: sources to include</string>
+    <string name="home_available_sources">Available sources</string>
+    <string name="home_available_sources_none">Available sources: none found yet</string>
+    <string name="phone_home_network_sources">Network sources in Select Source</string>
+    <string name="phone_home_network_sources_on">Computers and media servers found on the network are cards in the Select Source row</string>
+    <string name="phone_home_network_sources_off">They are listed on the Network page, under Available sources</string>
+    <string name="home_none_all">No videos yet</string>
+    <string name="home_poster_fetch_meta">Fetch meta</string>
+    <string name="home_poster_delete_video">Delete Video</string>
+    <string name="mobile_player_list">List</string>
+    <string name="mobile_player_list_episodes">Episodes</string>
+    <string name="mobile_player_list_files">Files in this folder</string>
+    <string name="mobile_player_list_empty">No other videos found</string>
+</resources>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="audio_channels_title">Audio Channels</string>
+    <string name="audio_channels_master">Master gain</string>
+    <string name="audio_channels_front">Front</string>
+    <string name="audio_channels_center">Center</string>
+    <string name="audio_channels_lfe">Subwoofer</string>
+    <string name="audio_channels_rear">Rear</string>
+    <string name="audio_channels_side">Side</string>
+    <string name="audio_channels_percent">%1$d%%</string>
+    <string name="audio_channels_detecting">Waiting for decoded PCM audio…</string>
+    <string name="audio_channels_layout">Decoded PCM · %1$d channels</string>
+    <string name="audio_channels_pcm_hint">PCM processing bypasses compressed passthrough while this popup is open or gains/downmix are active.</string>
+    <string name="audio_channels_downmix">Downmix to stereo</string>
+    <string name="audio_channels_reset">Reset</string>
+    <string name="audio_channels_close">Close</string>
+    <string name="audio_channels_unavailable">Audio Channels requires the internal Nova playback engine and an active audio stream.</string>
+    <string name="audio_channels_combine">Combine Front/Rear/Side</string>
+    <string name="audio_channels_combined">Front/Rear/Side</string>
+</resources>

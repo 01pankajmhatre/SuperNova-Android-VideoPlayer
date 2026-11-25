@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- "TV layout page 2": own copy of phone_tv_layout_details_activity with its own fragment class -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <ImageView
+        android:id="@+id/details_backdrop"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:alpha="0"
+        android:importantForAccessibility="no"
+        android:scaleType="centerCrop"
+        android:contentDescription="@null" />
+
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/main_browse_fragment"
+        android:name="com.archos.mediacenter.video.leanback.details.PhoneVideoDetails2Fragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+</FrameLayout>

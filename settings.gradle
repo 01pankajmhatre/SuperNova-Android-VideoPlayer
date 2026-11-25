@@ -1,0 +1,10 @@
+// settings.gradle
+rootProject.name = 'Video'  // This names your root project
+
+// Define library modules with absolute paths
+include ':FileCoreLibrary'
+project(':FileCoreLibrary').projectDir = new File(settingsDir.parentFile, 'FileCoreLibrary')
+
+include ':MediaLib'
+// SuperNova-specific library, kept separate from the older Video project's MediaLib.
+project(':MediaLib').projectDir = new File(settingsDir.parentFile, 'sn_libraries/MediaLib')

@@ -1,0 +1,9 @@
+<resources>
+    <string name="home_colors">Home colors</string>
+    <string name="home_card_color">Source card color</string>
+    <string name="home_background_theme">Background color</string>
+    <string-array name="home_background_names">
+        <item>Default</item><item>Black</item><item>Charcoal</item><item>Navy</item>
+        <item>Forest</item><item>Plum</item><item>Burgundy</item><item>Brown</item>
+    </string-array>
+</resources>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Compact phone subtitle settings, without a sample preview. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingHorizontal="8dp" android:paddingVertical="4dp">
+
+    <!-- Back button, top left: closes the panel, or goes up from the color page to the settings. -->
+    <ImageButton
+        android:id="@+id/sp_back"
+        android:layout_width="40dp"
+        android:layout_height="32dp"
+        android:layout_gravity="start"
+        android:padding="8dp"
+        android:scaleType="fitCenter"
+        android:src="@drawable/ic_subtitle_back"
+        android:contentDescription="@string/mobile_player_back"
+        android:background="?android:attr/selectableItemBackgroundBorderless" />
+
+<ScrollView
+        android:id="@+id/sp_scroll"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <LinearLayout
+            android:id="@+id/sp_rows"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+    </ScrollView>
+</LinearLayout>

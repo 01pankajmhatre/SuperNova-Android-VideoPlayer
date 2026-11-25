@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="home_list_view">List</string>
+    <string name="home_grid_view">Grid</string>
+    <string name="home_subtitle">Choose a source to browse</string>
+    <string name="home_network">Network</string>
+    <string name="home_recent">Recently Played</string>
+    <string name="home_movies">Movies</string>
+    <string name="home_series">TV Shows</string>
+    <string name="home_count_videos">%1$d videos</string>
+    <string name="home_count_movies">%1$d movies</string>
+    <string name="home_count_series">%1$d TV shows</string>
+    <string name="home_none_recent">Nothing played yet</string>
+    <string name="home_none_movies">No movies found</string>
+    <string name="home_none_series">No TV shows found</string>
+    <string name="home_resume_at">Resume at %1$d:%2$02d</string>
+    <string name="home_play_again">Play again</string>
+    <string name="home_seasons_episodes">%1$d seasons, %2$d episodes</string>
+    <string name="home_season_episodes">1 season, %1$d episodes</string>
+    <string name="home_added">Recently Added</string>
+    <string name="home_none_added">No recently added videos</string>
+</resources>
