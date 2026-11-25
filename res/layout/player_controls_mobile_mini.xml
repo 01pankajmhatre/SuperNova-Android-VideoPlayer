@@ -3,8 +3,8 @@
      "Playback UI style" setting is "Compact"). Keeps the ids of the standard bar:
        title (left) ................ elapsed / total (right)
        full width timeline with the time above the playhead
-       [ backward  play  forward ] centred, "Controls" button on the right
-     The Controls button swaps the playback row for the subtitle / audio / video / more buttons. -->
+       [ list  more ]   [ backward  play  forward ]   [ subtitles  audio  video ]
+     No Controls button / second button row: every button is always on the playback row. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/control_bar"
@@ -67,7 +67,7 @@
     <LinearLayout
         android:id="@+id/mobile_seek_row"
         android:layout_width="match_parent"
-        android:layout_height="@dimen/mobile_controls_seek_height"
+        android:layout_height="34dp"
         android:layout_marginStart="@dimen/mobile_controls_title_track_margin"
         android:layout_marginEnd="@dimen/mobile_controls_title_track_margin"
         android:gravity="center_vertical"
@@ -82,10 +82,10 @@
             android:minHeight="4dp"
             android:paddingStart="0dp"
             android:paddingEnd="0dp"
-            android:paddingTop="@dimen/mobile_controls_seek_padding_top"
+            android:paddingTop="20dp"
             android:paddingBottom="0dp"
             android:progressDrawable="@drawable/mobile_mini_seek_progress"
-            android:thumb="@drawable/mobile_seek_thumb"
+            android:thumb="@drawable/mobile_mini_seek_thumb"
             android:thumbOffset="0dp"
             android:splitTrack="false"
             android:contentDescription="@string/mobile_player_seek" />
@@ -96,7 +96,9 @@
         android:layout_width="match_parent"
         android:layout_height="@dimen/mobile_controls_buttons_height"
         android:layout_marginStart="@dimen/mobile_controls_title_track_margin"
-        android:layout_marginEnd="@dimen/mobile_controls_title_track_margin">
+        android:layout_marginEnd="@dimen/mobile_controls_title_track_margin"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp">
         <LinearLayout
             android:id="@+id/mobile_transport"
             android:layout_width="wrap_content"
@@ -125,20 +127,50 @@
                 android:contentDescription="@string/mobile_player_forward"
                 app:srcCompat="@drawable/mobile_ic_forward" />
         </LinearLayout>
-        <!-- left aligned "List" button: episodes of the season, or the videos in the folder -->
-        <ImageButton
-            android:id="@+id/mobile_list"
-            style="@style/MobilePlayerButton"
+        <!-- left aligned: "List" (episodes of the season, or the videos in the folder), then "More" -->
+        <LinearLayout
+            android:id="@+id/mobile_left_buttons"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
             android:layout_alignParentStart="true"
             android:layout_centerVertical="true"
-            android:contentDescription="@string/mobile_player_list"
-            app:srcCompat="@drawable/mobile_ic_list" />
-        <!-- right aligned "Controls" button (the pill's other buttons stay hidden) -->
-        <include
-            layout="@layout/mobile_playback_controls_pill"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+            <ImageButton
+                android:id="@+id/mobile_list"
+                style="@style/MobilePlayerButton"
+                android:contentDescription="@string/mobile_player_list"
+                app:srcCompat="@drawable/mobile_ic_list" />
+            <ImageButton
+                android:id="@+id/mobile_more"
+                style="@style/MobilePlayerButton"
+                android:contentDescription="@string/mobile_player_more"
+                app:srcCompat="@drawable/mobile_player_more" />
+        </LinearLayout>
+        <!-- right aligned: subtitles, audio, video -->
+        <LinearLayout
+            android:id="@+id/mobile_right_buttons"
             android:layout_width="wrap_content"
-            android:layout_height="@dimen/mobile_controls_buttons_height"
+            android:layout_height="match_parent"
             android:layout_alignParentEnd="true"
-            android:layout_centerVertical="true" />
+            android:layout_centerVertical="true"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+            <ImageButton
+                android:id="@+id/mobile_subtitles"
+                style="@style/MobilePlayerButton"
+                android:contentDescription="@string/menu_subtitles"
+                app:srcCompat="@drawable/mobile_ic_subtitle" />
+            <ImageButton
+                android:id="@+id/mobile_audio"
+                style="@style/MobilePlayerButton"
+                android:contentDescription="@string/menu_audio"
+                app:srcCompat="@drawable/mobile_ic_audio" />
+            <ImageButton
+                android:id="@+id/mobile_video_fit"
+                style="@style/MobilePlayerButton"
+                android:contentDescription="@string/phone_video_menu"
+                app:srcCompat="@drawable/ic_display_settings_24" />
+        </LinearLayout>
     </RelativeLayout>
 </LinearLayout>

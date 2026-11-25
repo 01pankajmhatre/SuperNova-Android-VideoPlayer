@@ -28,3 +28,6 @@ build/outputs/apk/*
 build/outputs/apk/amazon/*
 !build/outputs/apk/amazon/debug/
 !build/outputs/apk/amazon/debug/**
+
+# exclude folders
+.backup/

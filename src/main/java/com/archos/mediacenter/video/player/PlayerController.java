@@ -503,7 +503,7 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
     public static final String PHONE_STYLE_STANDARD = "standard";
     public static final String PHONE_STYLE_COMPACT = "compact";
     public static final String PHONE_STYLE_YOUTUBE = "youtube";
-    /** The "Compact" setting: title / time line, timeline, centred playback buttons and a right aligned Controls button. */
+    /** The "Compact" setting: title / time line, timeline, one button row: list + more | playback buttons | subtitles, audio, video. */
     public static final String PHONE_STYLE_MINI = "mini";
 
     public static final String PREF_STANDARD_TAP_ZONES = "phone_standard_tap_zones";
@@ -674,9 +674,9 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
     }
 
     /**
-     * Compact phone controls: swaps the standard control bar for player_controls_mobile_mini. Only the
-     * "Controls" button of the pill is shown, on the right of the bottom row; it opens the row with the
-     * subtitle, audio, video and more buttons in place of the playback buttons (togglePlainControls).
+     * Compact phone controls: swaps the standard control bar for player_controls_mobile_mini. The bottom
+     * row holds everything: list and more on the left, the playback buttons in the middle and subtitles,
+     * audio and video on the right. There is no Controls button and no second button row any more.
      */
     private void configureMiniPhoneControls(View view) {
         if (isTVMode || TVUtils.isTV(mContext)
@@ -692,12 +692,6 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
         root.addView(mini, index);
         mMiniUi = true;
         applyMiniSeekColor(mini);
-        View pill = mini.findViewById(R.id.mobile_compact_pill);
-        if (pill != null) {
-            pill.setBackground(null);
-            pill.setPadding(0, 0, 0, 0);
-            pill.setTag("plain_row");   // bindPhoneControlsPill then wires the Controls button to togglePlainControls
-        }
     }
 
     public boolean isMiniUi() {
@@ -727,7 +721,8 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
             progress.setLayerGravity(i, android.view.Gravity.CENTER_VERTICAL);
         }
         seek.setProgressDrawable(progress);
-        seek.setThumb(null);   // flat bar: no dot on the seek bar
+        // Keep the layout's thumb (transparent unless focused): TimeLabelSeekBar only draws the floating
+        // play/pause icon + time when it has a thumb to anchor to, so it must not be removed.
         seek.setThumbOffset(0);
     }
 
@@ -1057,7 +1052,28 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
         group.addOnLayoutChangeListener(listener);
     }
 
+    /** Compact UI: wires the buttons that now sit directly in the playback row (no pill any more). */
+    private void bindMiniButtons(View view) {
+        mSurfaceController.enableCompactVideoFit();
+        View.OnClickListener optionsListener = button -> {
+            if (!mIsStopped && mContext instanceof PlayerActivity) {
+                ((PlayerActivity) mContext).showMobilePlaybackOptions(button);
+            }
+        };
+        for (int id : new int[]{R.id.mobile_subtitles, R.id.mobile_audio, R.id.mobile_video_fit, R.id.mobile_more}) {
+            View button = view.findViewById(id);
+            if (button != null) button.setOnClickListener(optionsListener);
+        }
+        // swipe up / D-pad UP still opens the overlay pill (night mode, audio channels, ...)
+        setupTvSwipePill(view);
+        setupMiniFocusOrder(view);
+    }
+
     private void bindPhoneControlsPill(View view) {
+        if (mMiniUi && view.findViewById(R.id.mobile_list) != null) {
+            bindMiniButtons(view);
+            return;
+        }
         View pill = view.findViewById(R.id.mobile_compact_pill);
         if (pill == null) return;
 
@@ -1098,7 +1114,8 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
         if (seek == null || pause == null) return;
         seek.setFocusable(true);
         seek.setNextFocusDownId(R.id.pause);
-        for (int id : new int[]{R.id.mobile_list, R.id.backward, R.id.pause, R.id.forward, R.id.mobile_controls_toggle}) {
+        for (int id : new int[]{R.id.mobile_list, R.id.mobile_more, R.id.backward, R.id.pause, R.id.forward,
+                R.id.mobile_subtitles, R.id.mobile_audio, R.id.mobile_video_fit}) {
             View button = view.findViewById(id);
             if (button != null) button.setNextFocusUpId(R.id.seek_progress);
         }
@@ -1803,10 +1820,12 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
                     ((PlayerActivity) mContext).showMobilePlaybackOptions(button);
                 }
             };
-            v.findViewById(R.id.mobile_audio_channels).setOnClickListener(optionsListener);
-            v.findViewById(R.id.mobile_audio).setOnClickListener(optionsListener);
-            v.findViewById(R.id.mobile_subtitles).setOnClickListener(optionsListener);
-            v.findViewById(R.id.mobile_more).setOnClickListener(optionsListener);
+            // the compact UI has no audio channels button in its bar (it lives in the swipe-up pill)
+            for (int id : new int[]{R.id.mobile_audio_channels, R.id.mobile_audio, R.id.mobile_subtitles,
+                    R.id.mobile_more}) {
+                View optionsButton = v.findViewById(id);
+                if (optionsButton != null) optionsButton.setOnClickListener(optionsListener);
+            }
 
 
 
@@ -2300,40 +2319,8 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
 
     private void setVisibility(final View view, boolean show, boolean doAnim) {
         if (mIsStopped) return;
-        if (doAnim && mMiniUi && view == mControlBar) {
-            animateMiniControls(view, show);
-            return;
-        }
         if (show) view.setVisibility(View.VISIBLE);
         else view.setVisibility(View.GONE);
-    }
-
-    /** Compact UI: the control area fades and slides up from the bottom when it opens, and back down when it closes. */
-    private void animateMiniControls(final View view, final boolean show) {
-        final float slide = 24 * mContext.getResources().getDisplayMetrics().density;
-        view.animate().cancel();
-        if (show) {
-            if (view.getVisibility() != View.VISIBLE) {
-                view.setAlpha(0f);
-                view.setTranslationY(slide);
-                view.setVisibility(View.VISIBLE);
-            }
-            view.animate().alpha(1f).translationY(0f).setDuration(220)
-                    .setInterpolator(new android.view.animation.DecelerateInterpolator()).start();
-        } else {
-            if (view.getVisibility() != View.VISIBLE) {
-                view.setVisibility(View.GONE);
-                return;
-            }
-            view.animate().alpha(0f).translationY(slide).setDuration(180)
-                    .setInterpolator(new android.view.animation.AccelerateInterpolator())
-                    .withEndAction(() -> {
-                        if (mControlBarShowing) return;          // opened again meanwhile: leave it
-                        view.setVisibility(View.GONE);
-                        view.setAlpha(1f);
-                        view.setTranslationY(0f);
-                    }).start();
-        }
     }
 
     private void showActionBar(boolean show) {
