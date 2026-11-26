@@ -23,8 +23,6 @@ import android.view.MenuItem;
 import android.view.View;
 import com.archos.mediacenter.video.browser.presenter.Presenter;
 import com.archos.mediacenter.video.browser.presenter.PhoneMovieGridPresenter;
-import com.archos.mediacenter.video.browser.presenter.BannerPresenter;
-import com.archos.mediacenter.video.browser.BannerListMenu;
 import com.archos.mediacenter.video.browser.adapters.PresenterAdapterInterface;
 import com.archos.mediacenter.video.browser.adapters.object.Video;
 import com.archos.mediacenter.video.browser.adapters.object.Movie;
@@ -52,28 +50,10 @@ public class BrowserByVideoSelection extends CursorBrowserByVideo {
                 && ThemeManager.getInstance(requireContext()).isPhoneMode(requireContext());
     }
 
-    /** Banner style list view (list view button in the action bar), instead of the phone poster grid. */
-    private boolean usesBannerList() {
-        return usesPhoneMovieGrid() && BannerListMenu.isBanner(requireContext());
-    }
-
     @Override
     protected void setViewMode(int mode) {
-        super.setViewMode(usesBannerList() ? VideoUtils.VIEW_MODE_LIST : usesPhoneMovieGrid() ? VideoUtils.VIEW_MODE_GRID : mode);
-        if (usesBannerList()) {
-            float density = getResources().getDisplayMetrics().density;
-            mArchosGridView.setPadding(0, 0, 0, Math.round(24 * density));
-            mArchosGridView.setClipToPadding(false);
-            mArchosGridView.setSelector(android.R.color.transparent);
-            if (mArchosGridView instanceof android.widget.ListView) {
-                ((android.widget.ListView) mArchosGridView).setDivider(null);
-                ((android.widget.ListView) mArchosGridView).setDividerHeight(0);
-            } else if (mArchosGridView instanceof android.widget.GridView) {
-                ((android.widget.GridView) mArchosGridView).setVerticalSpacing(0);
-                ((android.widget.GridView) mArchosGridView).setHorizontalSpacing(0);
-            }
-            mRootView.setBackgroundColor(ThemeManager.getInstance(requireContext()).getLeanbackBackgroundColor());
-        } else if (usesPhoneMovieGrid()) {
+        super.setViewMode(usesPhoneMovieGrid() ? VideoUtils.VIEW_MODE_GRID : mode);
+        if (usesPhoneMovieGrid()) {
             android.widget.GridView grid = (android.widget.GridView) mArchosGridView;
             float density = getResources().getDisplayMetrics().density;
             int columns = Math.max(2, getResources().getConfiguration().screenWidthDp / 180);
@@ -92,12 +72,7 @@ public class BrowserByVideoSelection extends CursorBrowserByVideo {
     @Override
     protected void setupAdapter(boolean createNewAdapter) {
         super.setupAdapter(createNewAdapter);
-        if (usesBannerList()) {
-            PresenterAdapterInterface adapter = (PresenterAdapterInterface) mBrowserAdapter;
-            Presenter presenter = new BannerPresenter(requireContext());
-            adapter.setPresenter(Video.class, presenter);
-            adapter.setPresenter(Movie.class, presenter);
-        } else if (usesPhoneMovieGrid()) {
+        if (usesPhoneMovieGrid()) {
             PresenterAdapterInterface adapter = (PresenterAdapterInterface) mBrowserAdapter;
             Presenter presenter = new PhoneMovieGridPresenter(requireContext(), this);
             adapter.setPresenter(Video.class, presenter);
@@ -189,9 +164,6 @@ public class BrowserByVideoSelection extends CursorBrowserByVideo {
 			@Override
 			public void onCreateMenu(Menu menu, MenuInflater menuInflater) {
 				menu.removeItem(Browser.MENU_VIEW_MODE);
-				if (usesPhoneMovieGrid() && mBrowserAdapter != null && !mBrowserAdapter.isEmpty()) {
-					BannerListMenu.addItem(menu, usesBannerList());   // list view button, left of the sort button
-				}
 				if (mBrowserAdapter != null && !mBrowserAdapter.isEmpty() && mSortModeSubmenu != null) {
 					MenuItem sortMenuItem = menu.add(Browser.MENU_VIEW_MODE_GROUP, Browser.MENU_VIEW_MODE, Menu.NONE, R.string.sort_mode);
 					sortMenuItem.setIcon(R.drawable.ic_menu_sort);
@@ -220,17 +192,9 @@ public class BrowserByVideoSelection extends CursorBrowserByVideo {
 			public void onPrepareMenu(Menu menu) {
 				MenuItem item = menu.findItem(Browser.MENU_VIEW_MODE);
 				if (item != null) item.setIcon(R.drawable.ic_menu_sort);
-				MenuItem listItem = menu.findItem(BannerListMenu.MENU_ID);
-				if (listItem != null) BannerListMenu.updateItem(listItem, usesBannerList());
 			}
 			@Override
 			public boolean onMenuItemSelected(MenuItem item) {
-				if (item.getItemId() == BannerListMenu.MENU_ID) {
-					BannerListMenu.toggle(requireContext());
-					applySelectedViewMode(usesBannerList() ? VideoUtils.VIEW_MODE_LIST : VideoUtils.VIEW_MODE_GRID);
-					requireActivity().invalidateOptionsMenu();
-					return true;
-				}
 				return false;
 			}
 		}, getViewLifecycleOwner());

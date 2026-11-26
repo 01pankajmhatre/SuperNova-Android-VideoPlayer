@@ -301,6 +301,11 @@ abstract public class BrowserCategory extends ListFragment {
         updateLibrary();
         mCategoryAdapter = new CategoryAdapter(requireContext());
         setListAdapter(mCategoryAdapter);
+        View homeScroll = view.findViewById(R.id.home_classic);
+        if (homeScroll instanceof SmoothNestedScrollView && (com.archos.mediacenter.video.player.tvmenu.TVUtils.isTV(requireContext())
+                || com.archos.environment.ArchosFeatures.isAndroidTV(requireContext()))) {
+            ((SmoothNestedScrollView) homeScroll).setSmoothFocusScroll(true);   // remote: animated move to the focused row
+        }
         View sourcesRow = view.findViewById(R.id.home_sources_row);
         if (sourcesRow != null) {
             ((TextView) sourcesRow.findViewById(R.id.home_row_title)).setText("");   // no "Select Source" label
@@ -332,7 +337,7 @@ abstract public class BrowserCategory extends ListFragment {
             sourceHeader.setFocusable(true);
             sourceHeader.setBackgroundResource(R.drawable.phone_header_focus); // visible focus for the remote
             RecyclerView sources = sourcesRow.findViewById(R.id.home_row_list);
-            sources.setLayoutManager(new LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false));
+            sources.setLayoutManager(new SensitiveLinearLayoutManager(requireContext()));
             sources.setNestedScrollingEnabled(false);
             mHomeSourcesAdapter = new RecyclerView.Adapter<RecyclerView.ViewHolder>() {
                 @Override public int getItemCount() { return currentHomeTiles().size(); }
@@ -1254,7 +1259,7 @@ abstract public class BrowserCategory extends ListFragment {
             ((TextView) sourcesRow.findViewById(R.id.home_row_title)).setText("");   // no header above the sources
             RecyclerView list = sourcesRow.findViewById(R.id.home_row_list);
             if (section != SECTION_FILES) {   // Home / Library: horizontal scrolling row; Files keeps its wrapping grid
-                list.setLayoutManager(new LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false));
+                list.setLayoutManager(new SensitiveLinearLayoutManager(requireContext()));
             } else {
                 int cell = getResources().getDimensionPixelSize(R.dimen.phone_home_card_width) + dpi(10);
                 int span = Math.max(2, (getResources().getDisplayMetrics().widthPixels - dpi(24)) / cell);
@@ -1335,6 +1340,24 @@ abstract public class BrowserCategory extends ListFragment {
         for (ItemData t : mNetworkRowItems) {
             if (t.id == ITEM_ID_HOME_DLNA_NOW) { dlnaNow = t; mHomeSourceCards.add(t); break; }
         }
+        // the sources that are available come first: internal storage, external storage, DLNA, other network sources
+        ArrayList<ItemData> internalStorage = new ArrayList<>();
+        ArrayList<ItemData> externalStorage = new ArrayList<>();
+        ArrayList<ItemData> dlnaSources = new ArrayList<>();
+        ArrayList<ItemData> otherNetwork = new ArrayList<>();
+        for (ItemData t : mAvailableHomeTiles) {
+            if (t.id == ITEM_ID_VIDEO_FOLDER) internalStorage.add(t);
+            else if (t.id == ITEM_ID_BROWSER) externalStorage.add(t);
+        }
+        for (ItemData t : getDiscoveredNetworkSources()) {
+            if (t.id == ITEM_ID_NET_UPNP || t.id == ITEM_ID_NET_LOCAL_DLNA) dlnaSources.add(t);
+            else otherNetwork.add(t);
+        }
+        mHomeSourceCards.addAll(internalStorage);
+        mHomeSourceCards.addAll(externalStorage);
+        mHomeSourceCards.addAll(dlnaSources);
+        mHomeSourceCards.addAll(otherNetwork);
+        // then the library cards and the Network card
         int[] libraryOrder = {1, 2, 3, 5, 4};   // Movies, TV shows, All videos, Recently played, Recently added (ITEM_ID_OFFSET + n)
         for (int n : libraryOrder) {
             for (ItemData t : mAvailableHomeTiles) {
@@ -1344,9 +1367,6 @@ abstract public class BrowserCategory extends ListFragment {
         for (ItemData t : mAvailableHomeTiles) {
             if (t.id == ITEM_ID_HOME_NETWORK) { mHomeSourceCards.add(t); break; }
         }
-        for (ItemData t : mNetworkRowItems) {
-            if (t != dlnaNow) mHomeSourceCards.add(t);
-        }
         if (mNetworkRowAdapter != null) mNetworkRowAdapter.notifyDataSetChanged();
         if (mHomeSection == SECTION_FILES) {   // the Files page lists the same sources
             rebuildSectionTiles();
@@ -1355,11 +1375,28 @@ abstract public class BrowserCategory extends ListFragment {
         if (getView() != null) applyHomeRowVisibility(getView());   // the row appears when a network source is available
     }
 
+    /** Horizontal row that scrolls (and flings) farther than the finger moves: a short swipe goes through several cards. */
+    private static final class SensitiveLinearLayoutManager extends LinearLayoutManager {
+        private static final float SWIPE_FACTOR = 1.9f;
+
+        SensitiveLinearLayoutManager(Context context) {
+            super(context, HORIZONTAL, false);
+        }
+
+        @Override
+        public int scrollHorizontallyBy(int dx, RecyclerView.Recycler recycler, RecyclerView.State state) {
+            int wanted = Math.round(dx * SWIPE_FACTOR);
+            int scrolled = super.scrollHorizontallyBy(wanted, recycler, state);
+            // report the finger's own distance so edge glow / nested scrolling still behave
+            return Math.abs(scrolled) < Math.abs(wanted) ? Math.round(scrolled / SWIPE_FACTOR) : dx;
+        }
+    }
+
     private void bindNetworkRow(View row) {
         ((TextView) row.findViewById(R.id.home_row_title)).setText(R.string.home_sources_row_title);
         ((TextView) row.findViewById(R.id.home_row_status)).setText("");
         RecyclerView rv = row.findViewById(R.id.home_row_list);
-        rv.setLayoutManager(new LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false));
+        rv.setLayoutManager(new SensitiveLinearLayoutManager(requireContext()));
         rv.setNestedScrollingEnabled(false);
         mNetworkRowAdapter = new RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             @Override public int getItemCount() { return mHomeSourceCards.size(); }
@@ -1734,7 +1771,7 @@ abstract public class BrowserCategory extends ListFragment {
     private TextView bindHomeRow(View row, int titleRes, HomePosterAdapter adapter) {
         ((TextView) row.findViewById(R.id.home_row_title)).setText(titleRes);
         RecyclerView rv = row.findViewById(R.id.home_row_list);
-        rv.setLayoutManager(new LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false));
+        rv.setLayoutManager(new SensitiveLinearLayoutManager(requireContext()));
         rv.setAdapter(adapter);
         return row.findViewById(R.id.home_row_status);
     }

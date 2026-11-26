@@ -43,8 +43,6 @@ import com.archos.mediacenter.video.browser.adapters.object.Tvshow;
 import com.archos.mediacenter.video.browser.loader.AllTvshowsLoader;
 import com.archos.mediacenter.video.browser.loader.VideoLoader;
 import com.archos.mediacenter.video.browser.presenter.TvshowDetailedPresenter;
-import com.archos.mediacenter.video.browser.presenter.BannerPresenter;
-import com.archos.mediacenter.video.browser.BannerListMenu;
 import com.archos.mediacenter.video.browser.presenter.TvshowGridPresenter;
 import com.archos.mediacenter.video.browser.presenter.TvshowGridShortPresenter;
 import com.archos.mediacenter.video.browser.presenter.TvshowListPresenter;
@@ -113,29 +111,11 @@ public class BrowserAllTvShows extends CursorBrowserByVideo {
         return VideoUtils.VIEW_MODE_GRID;
     }
 
-    /** Banner style list view (list view button in the action bar), instead of the poster grid. Phone UI only. */
-    private boolean usesBannerList() {
-        return BannerListMenu.isPhone(requireContext()) && BannerListMenu.isBanner(requireContext());
-    }
-
     @Override
     protected void setViewMode(int mode) {
-        // on the phone the page is the poster grid, or the banner list when the list view button is on
-        super.setViewMode(usesBannerList() ? VideoUtils.VIEW_MODE_LIST
-                : BannerListMenu.isPhone(requireContext()) ? VideoUtils.VIEW_MODE_GRID : mode);
-        if (usesBannerList()) {
-            float density = getResources().getDisplayMetrics().density;
-            mArchosGridView.setPadding(0, 0, 0, Math.round(24 * density));
-            mArchosGridView.setClipToPadding(false);
-            mArchosGridView.setSelector(android.R.color.transparent);
-            if (mArchosGridView instanceof android.widget.ListView) {
-                ((android.widget.ListView) mArchosGridView).setDivider(null);
-                ((android.widget.ListView) mArchosGridView).setDividerHeight(0);
-            } else if (mArchosGridView instanceof android.widget.GridView) {
-                ((android.widget.GridView) mArchosGridView).setVerticalSpacing(0);
-                ((android.widget.GridView) mArchosGridView).setHorizontalSpacing(0);
-            }
-        }
+        // on the phone the page is always the poster grid
+        super.setViewMode(com.archos.mediacenter.video.utils.ThemeManager.getInstance(requireContext())
+                .isPhoneMode(requireContext()) ? VideoUtils.VIEW_MODE_GRID : mode);
     }
 
     @Override
@@ -150,9 +130,6 @@ public class BrowserAllTvShows extends CursorBrowserByVideo {
 			@Override
 			public void onCreateMenu(Menu menu, MenuInflater menuInflater) {
 				menu.removeItem(Browser.MENU_VIEW_MODE);
-				if (BannerListMenu.isPhone(requireContext()) && mBrowserAdapter != null && !mBrowserAdapter.isEmpty()) {
-					BannerListMenu.addItem(menu, usesBannerList());   // list view button, left of the sort button
-				}
 				if (mBrowserAdapter != null && !mBrowserAdapter.isEmpty() && mSortModeSubmenu != null) {
 					MenuItem sortMenuItem = menu.add(Browser.MENU_VIEW_MODE_GROUP, Browser.MENU_VIEW_MODE, Menu.NONE, R.string.sort_mode);
 					sortMenuItem.setIcon(R.drawable.ic_menu_sort);
@@ -178,17 +155,9 @@ public class BrowserAllTvShows extends CursorBrowserByVideo {
 			public void onPrepareMenu(Menu menu) {
 				MenuItem item = menu.findItem(Browser.MENU_VIEW_MODE);
 				if (item != null) item.setIcon(R.drawable.ic_menu_sort);
-				MenuItem listItem = menu.findItem(BannerListMenu.MENU_ID);
-				if (listItem != null) BannerListMenu.updateItem(listItem, usesBannerList());
 			}
 			@Override
 			public boolean onMenuItemSelected(MenuItem item) {
-				if (item.getItemId() == BannerListMenu.MENU_ID) {
-					BannerListMenu.toggle(requireContext());
-					applySelectedViewMode(usesBannerList() ? VideoUtils.VIEW_MODE_LIST : VideoUtils.VIEW_MODE_GRID);
-					requireActivity().invalidateOptionsMenu();
-					return true;
-				}
 				return false;
 			}
 		}, getViewLifecycleOwner());
@@ -353,10 +322,7 @@ public class BrowserAllTvShows extends CursorBrowserByVideo {
 	protected void setupAdapter(boolean createNewAdapter) {
 		if (createNewAdapter || mBrowserAdapter == null) {
 			mBrowserAdapter = new AllTvShowsAdapter(mContext, mCursor);
-			if (usesBannerList()) {
-				((PresenterAdapterByCursor)mBrowserAdapter).setPresenter(Tvshow.class, new BannerPresenter(getActivity()));
-			}
-			else if(mViewMode== VideoUtils.VIEW_MODE_GRID || mViewMode== VideoUtils.VIEW_MODE_GRID_SHORT) {
+			if(mViewMode== VideoUtils.VIEW_MODE_GRID || mViewMode== VideoUtils.VIEW_MODE_GRID_SHORT) {
 				((PresenterAdapterByCursor)mBrowserAdapter).setPresenter(Tvshow.class, new TvshowGridPresenter(getActivity(), this));
 			}
 			else if(mViewMode== VideoUtils.VIEW_MODE_GRID_SHORT) {

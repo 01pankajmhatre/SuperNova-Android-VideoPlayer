@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-<androidx.core.widget.NestedScrollView
+<com.archos.mediacenter.video.browser.SmoothNestedScrollView
     android:id="@+id/home_classic"
     android:layout_width="match_parent"
     android:layout_height="0dp"
@@ -34,7 +34,7 @@
         <include android:id="@+id/home_series_row" layout="@layout/home_poster_row" />
         <include android:id="@+id/home_all_row" layout="@layout/home_poster_row" android:visibility="gone" />
     </LinearLayout>
-</androidx.core.widget.NestedScrollView>
+</com.archos.mediacenter.video.browser.SmoothNestedScrollView>
 
 <!-- Scanning / refreshing status: bottom edge, centred -->
 <LinearLayout

@@ -207,21 +207,6 @@ public class PhoneHomeSettingsFragment extends PreferenceFragmentCompat {
         playback.addPreference(rememberBrightness);
 
         PreferenceCategory library = addCategory(screen, R.string.phone_settings_library);
-        SwitchPreferenceCompat banner = new SwitchPreferenceCompat(requireContext());
-        banner.setKey(PosterGridFragment.PREF_BANNER_LIST);
-        banner.setTitle(R.string.library_banner_list);
-        banner.setSummary(R.string.library_banner_list_summary);
-        banner.setDefaultValue(false);
-        library.addPreference(banner);
-        ListPreference bannerAlign = new ListPreference(requireContext());
-        bannerAlign.setKey(PosterGridFragment.PREF_BANNER_TEXT_ALIGN);
-        bannerAlign.setTitle(R.string.library_banner_text_align);
-        bannerAlign.setEntries(new CharSequence[]{getText(R.string.align_left), getText(R.string.align_center), getText(R.string.align_right)});
-        bannerAlign.setEntryValues(new String[]{"left", "center", "right"});
-        bannerAlign.setDefaultValue("center");
-        bannerAlign.setSummaryProvider(ListPreference.SimpleSummaryProvider.getInstance());
-        library.addPreference(bannerAlign);
-        bannerAlign.setDependency(PosterGridFragment.PREF_BANNER_LIST);   // only after both are in the screen
         SwitchPreferenceCompat metadata = new SwitchPreferenceCompat(requireContext());
         metadata.setKey(AutoScrapeService.KEY_ENABLE_AUTO_SCRAP);
         metadata.setTitle(R.string.phone_metadata_enabled);

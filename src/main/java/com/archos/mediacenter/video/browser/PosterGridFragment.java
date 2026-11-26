@@ -62,11 +62,8 @@ public class PosterGridFragment extends Fragment {
     public static final String ARG_EMBED = "embed";
     /** Movies and TV shows together (the Home grid). */
     public static final String ARG_BOTH = "both";
-    /** Library Movies / TV shows pages: banner rows (backdrop with the date and title on it) instead of the poster grid. */
-    public static final String PREF_BANNER_LIST = "library_banner_list";
     private static final int EMBED_MAX = 200;
     private static final int LOADER_ID = 9201;
-    private static final int MENU_LIST_VIEW = 9301;
     private static final int FILTER_ALL = 0, FILTER_PROGRESS = 1, FILTER_WATCHED = 2, FILTER_UNWATCHED = 3;
 
     private boolean mTv;
@@ -82,42 +79,7 @@ public class PosterGridFragment extends Fragment {
     private RecyclerView.Adapter<CardHolder> mAdapter;
     private TextView[] mChips;
     private TextView mEmpty;
-    /** Banner text position along the bottom: left, center or right. */
-    public static final String PREF_BANNER_TEXT_ALIGN = "library_banner_text_align";
     private RecyclerView mGrid;
-    private boolean mBanner;
-    private String mBannerAlign = "center";
-
-    private String wantBannerAlign() {
-        return PreferenceManager.getDefaultSharedPreferences(requireContext()).getString(PREF_BANNER_TEXT_ALIGN, "center");
-    }
-
-    private void alignBannerText(CardHolder h) {
-        String a = mBannerAlign;
-        int g = "left".equals(a) ? Gravity.START : "right".equals(a) ? Gravity.END : Gravity.CENTER_HORIZONTAL;
-        h.name.setGravity(g);
-        h.meta.setGravity(g);
-        if (h.name.getParent() instanceof LinearLayout) ((LinearLayout) h.name.getParent()).setGravity(g | Gravity.BOTTOM);
-    }
-
-    private boolean wantBanner() {
-        return !mBoth && PreferenceManager.getDefaultSharedPreferences(requireContext()).getBoolean(PREF_BANNER_LIST, false);
-    }
-
-    private void applyLayoutMode() {
-        if (mGrid == null) return;
-        boolean want = wantBanner();
-        String align = wantBannerAlign();
-        if (want == mBanner && align.equals(mBannerAlign) && mGrid.getLayoutManager() != null) return;
-        boolean modeChanged = want != mBanner || mGrid.getLayoutManager() == null;
-        mBannerAlign = align;
-        mBanner = want;
-        if (!modeChanged) { if (mAdapter != null) mAdapter.notifyDataSetChanged(); return; }
-        mGrid.setLayoutManager(want ? new androidx.recyclerview.widget.LinearLayoutManager(requireContext())
-                : new GridLayoutManager(requireContext(), 3));
-        mGrid.setPadding(dp(want ? 0 : 8), dp(4), dp(want ? 0 : 8), dp(16));
-        if (mAdapter != null) mAdapter.notifyDataSetChanged();   // view types changed
-    }
 
     private int dp(float v) {
         return Math.round(v * getResources().getDisplayMetrics().density);
@@ -219,25 +181,20 @@ public class PosterGridFragment extends Fragment {
 
         RecyclerView grid = new RecyclerView(ctx);
         mGrid = grid;
-        mBanner = wantBanner();
-        mBannerAlign = wantBannerAlign();
-        grid.setLayoutManager(mBanner ? new androidx.recyclerview.widget.LinearLayoutManager(ctx) : new GridLayoutManager(ctx, 3));
+        grid.setLayoutManager(new GridLayoutManager(ctx, 3));
         grid.setClipToPadding(false);
-        grid.setPadding(dp(mBanner ? 0 : 8), dp(4), dp(mBanner ? 0 : 8), dp(16));
+        grid.setPadding(dp(8), dp(4), dp(8), dp(16));
         mAdapter = new RecyclerView.Adapter<CardHolder>() {
             @NonNull @Override public CardHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-                return new CardHolder(viewType == 1 ? newBanner(parent.getContext()) : newCard(parent.getContext()));
+                return new CardHolder(newCard(parent.getContext()));
             }
-            @Override public int getItemViewType(int position) { return mBanner ? 1 : 0; }
             @Override public void onBindViewHolder(@NonNull CardHolder h, int position) {
                 final HomePosterAdapter.Poster p = mShown.get(position);
-                if (mBanner) alignBannerText(h);
                 h.name.setText(p.title);
                 h.meta.setText(p.meta);
                 h.meta.setVisibility(TextUtils.isEmpty(p.meta) ? View.GONE : View.VISIBLE);
-                Uri src = mBanner && p.backdrop != null ? p.backdrop : p.poster;
-                if (src != null && mBanner) Picasso.get().load(src).resize(800, 0).onlyScaleDown().into(h.poster);   // whole picture, top aligned by the view
-                else if (src != null) Picasso.get().load(src).resize(300, 450).centerCrop().into(h.poster);
+                Uri src = p.poster;
+                if (src != null) Picasso.get().load(src).resize(300, 450).centerCrop().into(h.poster);
                 else { Picasso.get().cancelRequest(h.poster); h.poster.setImageDrawable(null); }
                 h.itemView.setOnClickListener(v -> {
                     BrowserCategory owner = owner();
@@ -305,74 +262,6 @@ public class PosterGridFragment extends Fragment {
         card.addView(meta);
         card.setTag(new View[]{poster, name, meta});
         return card;
-    }
-
-    /** Banner row: backdrop darkened with the date / year line (accent colour) and the title centred on it. */
-    private View newBanner(Context ctx) {
-        android.widget.FrameLayout card = new android.widget.FrameLayout(ctx);
-        card.setFocusable(true);
-        RecyclerView.LayoutParams lp = new RecyclerView.LayoutParams(-1, dp(120));
-        lp.setMargins(0, 0, 0, dp(2));
-        card.setLayoutParams(lp);
-        ImageView image = new TopCropImageView(ctx);   // shows the top part of the backdrop
-        image.setBackgroundColor(0xFF1F2B44);
-        card.addView(image, new android.widget.FrameLayout.LayoutParams(-1, -1));
-        View shade = new View(ctx);
-        shade.setBackground(new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, new int[]{0x55000000, 0xAA000000}));
-        card.addView(shade, new android.widget.FrameLayout.LayoutParams(-1, -1));
-        LinearLayout texts = new LinearLayout(ctx);
-        texts.setOrientation(LinearLayout.VERTICAL);
-        texts.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM);   // text sits at the bottom of the banner
-        texts.setPadding(dp(16), 0, dp(16), dp(10));
-        TextView meta = new TextView(ctx);
-        meta.setTextColor(0xFFF5C542);
-        meta.setTextSize(12);
-        meta.setTypeface(null, Typeface.BOLD);
-        meta.setGravity(Gravity.CENTER);
-        meta.setSingleLine(true);
-        meta.setShadowLayer(dp(2), 0, dp(1), 0xCC000000);
-        texts.addView(meta, new LinearLayout.LayoutParams(-1, -2));
-        TextView name = new TextView(ctx);
-        name.setTextColor(Color.WHITE);
-        name.setTextSize(17);
-        name.setGravity(Gravity.CENTER);
-        name.setMaxLines(2);
-        name.setEllipsize(TextUtils.TruncateAt.END);
-        name.setShadowLayer(dp(2), 0, dp(1), 0xCC000000);
-        texts.addView(name, new LinearLayout.LayoutParams(-1, -2));
-        android.widget.FrameLayout.LayoutParams tlp = new android.widget.FrameLayout.LayoutParams(-1, -1);
-        card.addView(texts, tlp);
-        card.setTag(new View[]{image, name, meta});
-        return card;
-    }
-
-    /** Fills the view width and keeps the top of the picture (backdrops lose their bottom, not their top). */
-    private static class TopCropImageView extends androidx.appcompat.widget.AppCompatImageView {
-        TopCropImageView(Context c) {
-            super(c);
-            setScaleType(ScaleType.MATRIX);
-        }
-        @Override protected boolean setFrame(int l, int t, int r, int b) {
-            boolean changed = super.setFrame(l, t, r, b);
-            applyTopCrop();
-            return changed;
-        }
-        @Override public void setImageDrawable(@Nullable android.graphics.drawable.Drawable d) {
-            super.setImageDrawable(d);
-            applyTopCrop();
-        }
-        private void applyTopCrop() {
-            android.graphics.drawable.Drawable d = getDrawable();
-            int vw = getWidth(), vh = getHeight();
-            if (d == null || vw == 0 || vh == 0) return;
-            int dw = d.getIntrinsicWidth(), dh = d.getIntrinsicHeight();
-            if (dw <= 0 || dh <= 0) return;
-            float scale = Math.max(vw / (float) dw, vh / (float) dh);
-            android.graphics.Matrix m = new android.graphics.Matrix();
-            m.setScale(scale, scale);
-            m.postTranslate((vw - dw * scale) / 2f, 0f);
-            setImageMatrix(m);
-        }
     }
 
     private static class CardHolder extends RecyclerView.ViewHolder {
@@ -520,45 +409,14 @@ public class PosterGridFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        if (!mEmbed && !mBoth) {
-            // Action bar: list view button (banner list of the Library Movies / TV shows pages <-> poster grid)
-            requireActivity().addMenuProvider(new MenuProvider() {
-                @Override public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater menuInflater) {
-                    MenuItem item = menu.add(0, MENU_LIST_VIEW, Menu.NONE, R.string.grid_list_view);
-                    item.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-                    androidx.core.view.MenuItemCompat.setIconTintList(item,
-                            android.content.res.ColorStateList.valueOf(0xFFFFFFFF));
-                    updateListViewItem(item);
-                }
-                @Override public void onPrepareMenu(@NonNull Menu menu) {
-                    MenuItem item = menu.findItem(MENU_LIST_VIEW);
-                    if (item != null) updateListViewItem(item);
-                }
-                @Override public boolean onMenuItemSelected(@NonNull MenuItem item) {
-                    if (item.getItemId() != MENU_LIST_VIEW) return false;
-                    PreferenceManager.getDefaultSharedPreferences(requireContext()).edit()
-                            .putBoolean(PREF_BANNER_LIST, !mBanner).apply();   // same setting as the Library pages
-                    applyLayoutMode();
-                    requireActivity().invalidateOptionsMenu();
-                    return true;
-                }
-            }, getViewLifecycleOwner(), Lifecycle.State.RESUMED);
-        }
         LoaderManager lm = LoaderManager.getInstance(this);
         if (mBoth || !mTv) lm.initLoader(LOADER_ID, null, callbacks(false));
         if (mBoth || mTv) lm.initLoader(LOADER_ID + 1, null, callbacks(true));
     }
 
-    /** The button shows what a tap switches to: the list icon on the poster grid, the grid icon on the banner list. */
-    private void updateListViewItem(MenuItem item) {
-        item.setIcon(mBanner ? R.drawable.mobile_ic_grid : R.drawable.mobile_ic_list);
-        item.setTitle(mBanner ? R.string.grid_grid_view : R.string.grid_list_view);
-    }
-
     @Override
     public void onStart() {
         super.onStart();
-        applyLayoutMode();   // the banner list setting may have changed
         if (mEmbed) return;
         // full page: the action bar stays, titled Movies / TV shows
         if (getActivity() instanceof AppCompatActivity) {
