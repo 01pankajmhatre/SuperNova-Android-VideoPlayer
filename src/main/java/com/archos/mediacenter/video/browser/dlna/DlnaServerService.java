@@ -48,7 +48,16 @@ public class DlnaServerService extends Service {
     }
 
     public static void stop(Context context) {
-        context.startService(new Intent(context, DlnaServerService.class).setAction(ACTION_STOP));
+        Context app = context.getApplicationContext();
+        sRunning = false;
+        sUrl = null;
+        new DlnaServerPrefs(app).setRunningRequested(false);
+        try {
+            app.startService(new Intent(app, DlnaServerService.class).setAction(ACTION_STOP));
+        } catch (RuntimeException e) {
+            // the app is in the background and may not start a service: stopping it directly works anyway
+            app.stopService(new Intent(app, DlnaServerService.class));
+        }
     }
 
     private DlnaHttpServer mHttp;

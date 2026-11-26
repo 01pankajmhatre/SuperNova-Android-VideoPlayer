@@ -79,7 +79,13 @@ public final class DlnaCastPanel {
         mOnFail = r;
     }
 
+    /** Stops the DLNA server when this cast started it (a server the user switched on stays on). */
+    private void stopServerStartedByCast() {
+        if (DlnaCastSession.takeServerStartedByCast()) DlnaServerService.stop(mContext);
+    }
+
     private void fail(String message) {
+        if (!DlnaCastSession.isActive()) stopServerStartedByCast();      // nothing is being cast: the server is not needed
         if (mOnFail != null) mOnFail.accept(message);
         else toast(message);
     }
@@ -100,10 +106,11 @@ public final class DlnaCastPanel {
                     chosen[0] = true;
                     if (which < found.size()) send(found.get(which), file, title);
                 })
-                .setNegativeButton(android.R.string.cancel, null).create();
+                .setNegativeButton(android.R.string.cancel, (d, which) -> { if (!chosen[0]) fail("No TV chosen"); }).create();
         dialog.show();
         mWorker.execute(() -> {
             if (!DlnaServerService.isRunning()) {
+                DlnaCastSession.setServerStartedByCast(true);
                 DlnaServerService.start(mContext);
                 for (int i = 0; i < 40 && DlnaServerService.getUrl() == null; i++) sleep(250);
             }
@@ -294,7 +301,7 @@ public final class DlnaCastPanel {
             release(false);
             mControlThread.execute(tv::stop);
             DlnaCastSession.end();
-            DlnaServerService.stop(mContext);        // the DLNA server of the app stops too
+            stopServerStartedByCast();               // the DLNA server that the cast started stops with it
             mPanel.setVisibility(View.GONE);
             if (mOnStop != null) mOnStop.run();
         });
@@ -322,7 +329,7 @@ public final class DlnaCastPanel {
         final DlnaRendererControl tv = mTv;
         if (tv == null) return;
         mControlThread.execute(() -> {
-            if (mSsapWorks != Boolean.FALSE) {
+            if (mSsapWorks != Boolean.FALSE && !tv.isGoogleCast()) {
                 String error = new DlnaTvRemote(mContext, tv.getAddress()).volumeStep(up, () -> post(() -> {
                     mError.setText("Accept the question shown on the TV (use the TV remote) to allow volume control.");
                     mError.setVisibility(View.VISIBLE);

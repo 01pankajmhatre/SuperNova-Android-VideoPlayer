@@ -166,8 +166,12 @@ public class PhoneHomeSettingsFragment extends PreferenceFragmentCompat {
         playback.addPreference(doubleTap);
         // Show the Standard settings only when that style is selected.
         updateStyleOptions(playerStyle.getValue(), standardOptions, ytCenter, ytOpacity, ytSeekColor);
+        final androidx.preference.CheckBoxPreference hideExtraButtons =
+                new androidx.preference.CheckBoxPreference(requireContext());
         playerStyle.setOnPreferenceChangeListener((preference, value) -> {
             updateStyleOptions(value, standardOptions, ytCenter, ytOpacity, ytSeekColor);
+            hideExtraButtons.setEnabled(PlayerController.PHONE_STYLE_MINI.equals(value)
+                    || getPreferenceManager().getSharedPreferences().getBoolean(PlayerController.PREF_SWIPE_PILL, false));
             return true;
         });
 
@@ -177,6 +181,21 @@ public class PhoneHomeSettingsFragment extends PreferenceFragmentCompat {
         swipePill.setSummary(R.string.phone_swipe_pill_summary);
         swipePill.setDefaultValue(false);
         playback.addPreference(swipePill);
+
+        // the buttons pill (swipe up / UP on the remote) has the other buttons: the control area can keep only playback
+        hideExtraButtons.setKey(PlayerController.PREF_HIDE_EXTRA_BUTTONS);
+        hideExtraButtons.setTitle(R.string.phone_hide_extra_buttons);
+        hideExtraButtons.setSummary(R.string.phone_hide_extra_buttons_summary);
+        hideExtraButtons.setDefaultValue(false);
+        playback.addPreference(hideExtraButtons);
+        hideExtraButtons.setEnabled(getPreferenceManager().getSharedPreferences()
+                .getBoolean(PlayerController.PREF_SWIPE_PILL, false)
+                || PlayerController.PHONE_STYLE_MINI.equals(playerStyle.getValue()));
+        swipePill.setOnPreferenceChangeListener((preference, value) -> {
+            hideExtraButtons.setEnabled(Boolean.TRUE.equals(value)
+                    || PlayerController.PHONE_STYLE_MINI.equals(playerStyle.getValue()));
+            return true;
+        });
 
         addAction(playback, R.string.phone_poster_tap, activity == null ? null : activity::showPosterTapPicker);
 

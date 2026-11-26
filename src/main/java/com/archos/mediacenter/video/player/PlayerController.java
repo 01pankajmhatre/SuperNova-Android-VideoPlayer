@@ -148,6 +148,8 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
     public static final int SEEK_PROGRESS_TIME_THRESHOLD = 10; //ms
 
     protected static final int SHOW_TIMEOUT = 3000;
+    /** Compact UI: the control area goes away after 5 s without activity (only while the video is playing). */
+    private static final int MINI_SHOW_TIMEOUT = 5001;
     protected static final float SIDE_SIZE_RATIO = (float) 0.25;
 
     protected static final int  FLAG_SIDE_CONTROL_BAR = 0x01;
@@ -527,6 +529,8 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
     public static final String PREF_YTUI_SEEK_COLOR = "phone_ytui_seek_color";
     public static final int DEFAULT_YTUI_PILL_OPACITY = 85;           // percent
     public static final String DEFAULT_YTUI_SEEK_COLOR = "#FF0000";
+    /** Hide the buttons except the playback buttons; the buttons pill (swipe up / D-pad UP) has the rest. */
+    public static final String PREF_HIDE_EXTRA_BUTTONS = "phone_hide_extra_buttons";
     private static final String DEFAULT_MINI_SEEK_COLOR = "#2B2BE0";   // the compact UI's original blue
 
     public static String getPhonePlayerStyle(android.content.SharedPreferences prefs) {
@@ -1104,6 +1108,13 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
     /** Compact UI + remote: seek bar -> DOWN -> playback buttons, playback buttons -> UP -> seek bar. */
     private void setupMiniFocusOrder(View view) {
         View list = view.findViewById(R.id.mobile_list);
+        if (PreferenceManager.getDefaultSharedPreferences(mContext).getBoolean(PREF_HIDE_EXTRA_BUTTONS, false)) {
+            // only the playback buttons stay in the control area
+            View toggle = view.findViewById(R.id.mobile_controls_toggle);
+            if (toggle != null) toggle.setVisibility(View.GONE);
+            if (list != null) list.setVisibility(View.GONE);
+            list = null;
+        }
         if (list != null) {
             list.setOnClickListener(button -> {
                 if (mContext instanceof PlayerActivity) ((PlayerActivity) mContext).showMobileVideoList();
@@ -2435,8 +2446,53 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
                 && mControllerViewLeft.findViewById(R.id.mobile_compact_transport) != null;
     }
 
+    public boolean isPhoneTrackPopupOpen() {
+        return mPhoneTrackPopupOpen;
+    }
+
+    public boolean isSwipePillShowing() {
+        return mSwipePillShowing;
+    }
+
+    /**
+     * Remote: after a popup opened from a button closes, the cursor goes back to that button, in the buttons
+     * pill when the popup was opened from there, otherwise in the control area.
+     */
+    public void focusOptionsButton(int buttonId, boolean fromPill) {
+        if (buttonId == 0) return;
+        if (fromPill && mSwipePill != null) {
+            if (!mSwipePillShowing) showSwipePill();
+            View button = mSwipePill.findViewById(buttonId);
+            if (button != null) {
+                button.setFocusable(true);
+                button.requestFocus();
+            }
+            return;
+        }
+        if (mControllerViewLeft == null) return;
+        if (!mControlBarShowing) show();
+        View button = findShownById(mControllerViewLeft, buttonId);
+        if (button != null) {
+            button.setFocusable(true);
+            button.requestFocus();
+        }
+    }
+
+    private static View findShownById(View root, int id) {
+        if (root.getId() == id && root.isShown()) return root;
+        if (root instanceof ViewGroup) {
+            ViewGroup group = (ViewGroup) root;
+            for (int i = 0; i < group.getChildCount(); i++) {
+                View found = findShownById(group.getChildAt(i), id);
+                if (found != null) return found;
+            }
+        }
+        return null;
+    }
+
     public void setPhoneTrackPopupOpen(boolean open) {
         mPhoneTrackPopupOpen = open;
+        if (mOnControlBarVisibilityListener != null && mMiniUi) mOnControlBarVisibilityListener.onControlBarVisibilityChanged(mControlBarShowing);
         // Compact UI: the control area stays on screen while a popup is open, so it must not time out
         if (mMiniUi && open) mHandler.removeMessages(MSG_FADE_OUT);
         applyPhoneTrackPopupVisibility();
@@ -2558,6 +2614,7 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
         if (log.isDebugEnabled()) log.debug("show({}, {})", flags, timeout);
         if (mIsStopped)
             return;
+        if (mMiniUi && timeout == SHOW_TIMEOUT) timeout = MINI_SHOW_TIMEOUT;
         if ((flags & FLAG_SIDE_CONTROL_BAR) != 0) clearSeekOnly();
         // While the swipe-up pill is open the control area stays hidden (the pill itself brings it back).
         if (mSwipePillShowing) flags &= ~FLAG_SIDE_CONTROL_BAR;
@@ -2575,7 +2632,8 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
         }
         setOSDVisibility(true, flags);
 
-        if ((timeout == 5000) || (timeout != 0 && Player.sPlayer.isPlaying())) {
+        // isPlaying() is still false right after start() (resume / end of a seek): also count "not paused"
+        if ((timeout == 5000) || (timeout != 0 && (Player.sPlayer.isPlaying() || !Player.sPlayer.isPauseRequested()))) {
             sendFadeOut(timeout);
         }
     }
@@ -2587,6 +2645,7 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
     }
 
     private void sendFadeOut(int timeout) {
+        if (mMiniUi && timeout == SHOW_TIMEOUT) timeout = MINI_SHOW_TIMEOUT;
         mHandler.removeMessages(MSG_FADE_OUT);
         if (mMiniUi && mPhoneTrackPopupOpen) return;   // popup open: keep the control area
         if (!isCompactPillExpanded()) {

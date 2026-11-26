@@ -321,11 +321,17 @@ public class PlayerActivity extends AppCompatActivity implements PlayerControlle
 
     private final ActivityResultLauncher<Intent> subtitleLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
-            result -> { if (result.getResultCode() == Activity.RESULT_OK) onSubtitleResult(); });
+            result -> {
+                if (result.getResultCode() == Activity.RESULT_OK) onSubtitleResult();
+                else mReopenSubtitlePopupAfterDownload = false;
+            });
 
     private final ActivityResultLauncher<String[]> fontLauncher = registerForActivityResult(
             new ActivityResultContracts.OpenDocument(), this::onFontPicked);
 
+    private boolean mReopenSubtitlePopupAfterDownload;   // a subtitle download was started from the popup
+    private int mLastOptionsButtonId;                      // button that opened the last popup (remote cursor goes back to it)
+    private boolean mLastOptionsFromPill;
     private boolean mHasAskedFloatingPermission;
     private boolean mIsInfoActivityDisplayed;
     private boolean mLaunchFloatingPlayer;
@@ -882,6 +888,9 @@ public class PlayerActivity extends AppCompatActivity implements PlayerControlle
         mPlayerController.setOnControlBarVisibilityListener(visible -> {
             if (mSubtitleManager != null) {
                 mSubtitleManager.onControlBarVisibilityChanged();
+                // compact UI: no subtitles under the control area (they stay visible while choosing a subtitle)
+                mSubtitleManager.setHiddenByControls(visible && mPlayerController != null
+                        && mPlayerController.isMiniUi() && !mPlayerController.isPhoneTrackPopupOpen());
             }
             if (!visible && isTVMode && mSkipButtonContainer != null && mSkipButtonContainer.getVisibility() == View.VISIBLE && !isMenuOrDialogDisplayed()) {
                 requestSkipButtonFocus();
@@ -3082,6 +3091,7 @@ public class PlayerActivity extends AppCompatActivity implements PlayerControlle
             if (mShowingDialogId == DIALOG_SUBTITLE_SETTINGS) return;
             mPlayerController.setPhoneTrackPopupOpen(false);
             mPlayerController.show();
+            restoreOptionsButtonFocus();
         };
         if (mPlayerController.isMiniUi()) {
             // compact UI: top centre, the control area stays visible while the popup is open
@@ -3096,6 +3106,31 @@ public class PlayerActivity extends AppCompatActivity implements PlayerControlle
     private void miniPopupClosed() {
         mPlayerController.setPhoneTrackPopupOpen(false);
         mPlayerController.show();
+        restoreOptionsButtonFocus();
+    }
+
+    /** Remote: the cursor goes back to the button (control area or buttons pill) that opened the popup. */
+    private void restoreOptionsButtonFocus() {
+        final int id = mLastOptionsButtonId;
+        final boolean fromPill = mLastOptionsFromPill;
+        if (id == 0) return;
+        if (!(TVUtils.isTV(this) || ArchosFeatures.isAndroidTV(this))) return;
+        mLastOptionsButtonId = 0;
+        mLastOptionsFromPill = false;
+        getWindow().getDecorView().postDelayed(() -> {
+            if (!isFinishing() && mPlayerController != null) mPlayerController.focusOptionsButton(id, fromPill);
+        }, 150);
+    }
+
+    /** After a subtitle download: select the new subtitle and show the subtitle popup again. */
+    private void selectNewSubtitleAndReopenPopup(int newTrack) {
+        if (isFinishing() || mPlayer == null || mVideoInfo == null || mSubtitleInfoController == null) return;
+        int position = subtitleTrackToPosition(newTrack >= 0 ? newTrack : mVideoInfo.subtitleTrack, mVideoInfo.nbSubtitles);
+        if (position != subtitleTrackToPosition(mVideoInfo.subtitleTrack, mVideoInfo.nbSubtitles)) {
+            onTrackSelected(mSubtitleInfoController, position, mSubtitleInfoController.getTrackNameAt(position), "");
+        }
+        mSubtitleInfoController.setTrack(position);
+        showPhoneSubtitlePopup();
     }
 
     /** Compact UI video popup: the picture is what matters, so every control is hidden while it is open. */
@@ -3193,6 +3228,7 @@ public class PlayerActivity extends AppCompatActivity implements PlayerControlle
             }
             mPlayerController.setPhoneTrackPopupOpen(false);
             mPlayerController.show();
+            restoreOptionsButtonFocus();
         };
         if (mPlayerController.isMiniUi()) {
             // compact UI: top centre, the control area stays visible while the popup is open
@@ -3379,6 +3415,8 @@ public class PlayerActivity extends AppCompatActivity implements PlayerControlle
     }
 
     public void showMobilePlaybackOptions(View anchor) {
+        mLastOptionsButtonId = anchor.getId();
+        mLastOptionsFromPill = mPlayerController != null && mPlayerController.isSwipePillShowing();
         if (anchor.getId() == R.id.mobile_video_fit) {
             showVideoOptions();
             return;
@@ -4874,6 +4912,7 @@ public class PlayerActivity extends AppCompatActivity implements PlayerControlle
     }
 
     private void downloadSubtitles() {
+        mReopenSubtitlePopupAfterDownload = true;
         Intent subIntent = new Intent(Intent.ACTION_MAIN);
         subIntent.setClass(mContext, SubtitlesDownloaderActivity2.class);
         subIntent.putExtra(SubtitlesDownloaderActivity2.EXTRA_PLAYBACK_POPUP_WIDTH, !TVUtils.isTV(this));
@@ -5395,6 +5434,13 @@ public class PlayerActivity extends AppCompatActivity implements PlayerControlle
             }
             updateSubtitleLayoutMode();
             refreshSubtitleTVMenu();
+
+            if (mReopenSubtitlePopupAfterDownload && phoneSubtitleList && nbTrack != 0 && newSubtitleTrack >= 0) {
+                // a subtitle was just downloaded: select it and keep the subtitle popup open on it
+                mReopenSubtitlePopupAfterDownload = false;
+                final int downloaded = newSubtitleTrack;
+                getWindow().getDecorView().postDelayed(() -> selectNewSubtitleAndReopenPopup(downloaded), 400);
+            }
 
             if (mPlayerController.isTVMenuDisplayed()) {
                 mPlayerController.showTVMenu(true);

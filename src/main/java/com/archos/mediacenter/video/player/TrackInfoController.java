@@ -164,14 +164,53 @@ public class TrackInfoController implements OnMenuItemClickListener, OnItemClick
         ArrayList<Object> entries = new ArrayList<>();
         entries.add(COMPACT_CHECK);
         int count = getTrackCount();                      // position 0 is "none"
-        if (mTrackPosition != 0 && count > 1) {
+        boolean tracksShown = mTrackPosition != 0 && count > 1;
+        // "More options" (the settings rows) come before the streams; a separator only when streams follow
+        for (int i = count; i < mTrackItemList.size(); i++) {
+            TrackItem item = mTrackItemList.get(i);
+            if (item.type != TRACK_SEP) entries.add(item);
+        }
+        if (tracksShown) {
+            for (int i = count; i < mTrackItemList.size(); i++) {
+                TrackItem item = mTrackItemList.get(i);
+                if (item.type == TRACK_SEP) entries.add(item);
+            }
             int real = count - 1;
             int shown = mSubtitleTracksExpanded ? real : Math.min(COMPACT_TOP_TRACKS, real);
             for (int i = 1; i <= shown; i++) entries.add(mTrackItemList.get(i));
             if (real > COMPACT_TOP_TRACKS) entries.add(COMPACT_MORE);
         }
-        for (int i = count; i < mTrackItemList.size(); i++) entries.add(mTrackItemList.get(i));
         return entries;
+    }
+
+    /** Audio popup order: the settings rows ("More options") first, then the separator, then the streams. */
+    private ArrayList<TrackItem> displayItems() {
+        ArrayList<TrackItem> others = new ArrayList<>();
+        ArrayList<TrackItem> separators = new ArrayList<>();
+        ArrayList<TrackItem> tracks = new ArrayList<>();
+        for (TrackItem item : mTrackItemList) {
+            if (item.type == TRACK_INFO) tracks.add(item);
+            else if (item.type == TRACK_SEP) separators.add(item);
+            else others.add(item);
+        }
+        ArrayList<TrackItem> result = new ArrayList<>(others);
+        result.addAll(separators);
+        result.addAll(tracks);
+        return result;
+    }
+
+    /** List position of the first stream (the TV cursor starts there), or -1. */
+    private int firstTrackListPosition() {
+        int count = mTrackInfoAdapter.getCount();
+        for (int i = 0; i < count; i++) {
+            if (mPopupFooter != null && i == count - 1) break;
+            if (mCompactSubtitles) {
+                if (compactEntry(i) instanceof TrackInfo) return i;
+            } else if (getPopupItem(i) instanceof TrackInfo) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     private Object compactEntry(int position) {
@@ -185,7 +224,8 @@ public class TrackInfoController implements OnMenuItemClickListener, OnItemClick
             Object entry = compactEntry(position);
             return entry instanceof TrackItem ? (TrackItem) entry : null;
         }
-        return mTrackItemList.get(position);
+        ArrayList<TrackItem> items = displayItems();
+        return position >= 0 && position < items.size() ? items.get(position) : null;
     }
 
     private void applyCompactSubtitleSpacing(View row) {
@@ -631,6 +671,12 @@ public class TrackInfoController implements OnMenuItemClickListener, OnItemClick
             mPopup.setAnchorView(anchor);
             mPopup.show();
             styleListSelector();
+            // remote: the cursor starts on the first stream, not on the "More options" row above it
+            if (com.archos.mediacenter.video.player.tvmenu.TVUtils.isTV(mContext)
+                    || com.archos.environment.ArchosFeatures.isAndroidTV(mContext)) {
+                int first = firstTrackListPosition();
+                if (first >= 0) mPopup.setSelection(first);
+            }
         } else {
             onDismiss.run();
         }

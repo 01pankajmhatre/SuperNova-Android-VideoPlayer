@@ -708,6 +708,17 @@ public class SubtitleManager {
      * over the whole parent when subtitles may use the bars. Measuring against the view itself
      * is therefore right in every mode and follows any future change to that sizing.
      */
+    private boolean mHiddenByControls;
+
+    /** Compact UI: the subtitles are hidden while the control area is open (and shown again when it closes). */
+    public void setHiddenByControls(boolean hidden) {
+        mHiddenByControls = hidden;
+        float alpha = hidden ? 0f : 1f;
+        View canvas = getSubtitleCanvas();
+        if (canvas != null) canvas.animate().alpha(alpha).setDuration(150).start();
+        if (mSubtitleLayout != null) mSubtitleLayout.animate().alpha(alpha).setDuration(150).start();
+    }
+
     private View getSubtitleCanvas() {
         if (mGlSubtitleView == null && mPlayerView != null) {
             mGlSubtitleView = mPlayerView.findViewById(R.id.gl_subtitle_view);

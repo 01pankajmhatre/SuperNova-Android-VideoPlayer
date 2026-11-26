@@ -32,6 +32,7 @@ public final class DlnaRendererControl {
 
     private final String mClient;
     private String mName;
+    private DlnaGoogleCast mGoogle;          // set for a Google Cast device (Google TV, Chromecast)
     private String mAvTransportUrl;
     private String mAvTransportType = AVT;
     private String mRenderingUrl;
@@ -54,6 +55,14 @@ public final class DlnaRendererControl {
         mClient = clientIp;
     }
 
+    /** A Google Cast device (Google TV, Chromecast ...), controlled with the Cast protocol instead of DLNA. */
+    private static DlnaRendererControl googleCast(DlnaGoogleCast.Device device) {
+        DlnaRendererControl c = new DlnaRendererControl(device.host);
+        c.mGoogle = new DlnaGoogleCast(device.host, device.port);
+        c.mName = device.name + " (Google Cast)";
+        return c;
+    }
+
     /** All players (TVs, speakers) of the network that can be told what to play; blocks about 5 s. */
     public static java.util.List<DlnaRendererControl> discoverAll() {
         return discoverAll(null);
@@ -65,6 +74,14 @@ public final class DlnaRendererControl {
         final java.util.List<DlnaRendererControl> result = new java.util.concurrent.CopyOnWriteArrayList<>();
         final java.util.Set<String> seen = java.util.Collections.synchronizedSet(new java.util.HashSet<String>());
         java.util.List<Thread> fetchers = new java.util.ArrayList<>();
+        // Google TV / Chromecast do not answer the DLNA search: ask for Google Cast devices at the same time
+        Thread castSearch = new Thread(() -> DlnaGoogleCast.discover(device -> {
+            DlnaRendererControl c = googleCast(device);
+            result.add(c);
+            if (onFound != null && reported.add(c.mClient + "|" + c.getName())) onFound.accept(c);
+        }, 5000), "CastSearch");
+        castSearch.start();
+        fetchers.add(castSearch);
         try (DatagramSocket socket = new DatagramSocket()) {
             socket.setSoTimeout(500);
             long end = System.currentTimeMillis() + 5000;
@@ -76,7 +93,8 @@ public final class DlnaRendererControl {
                 if (bursts < 3 && System.currentTimeMillis() >= nextSend) {
                     bursts++;
                     nextSend = System.currentTimeMillis() + 1200;
-                    for (String st : new String[]{AVT, "urn:schemas-upnp-org:device:MediaRenderer:1"}) {
+                    // some TVs only answer the general searches
+                    for (String st : new String[]{AVT, "urn:schemas-upnp-org:device:MediaRenderer:1", "upnp:rootdevice"}) {
                         byte[] data = ("M-SEARCH * HTTP/1.1\r\nHOST: 239.255.255.250:1900\r\nMAN: \"ssdp:discover\"\r\nMX: 2\r\nST: "
                                 + st + "\r\n\r\n").getBytes(StandardCharsets.UTF_8);
                         try {
@@ -135,6 +153,7 @@ public final class DlnaRendererControl {
 
     /** Tells the player to load this address and play it. @return null when it worked, else the reason. */
     public String cast(String url, String title, String mime) {
+        if (mGoogle != null) return mGoogle.cast(url, title, mime);
         if (mAvTransportUrl == null) return "no player";
         String full = didl(url, title, "http-get:*:" + mime
                 + ":DLNA.ORG_OP=01;DLNA.ORG_CI=0;DLNA.ORG_FLAGS=01700000000000000000000000000000");
@@ -210,6 +229,10 @@ public final class DlnaRendererControl {
     }
 
     public void stop() {
+        if (mGoogle != null) {
+            mGoogle.stop();
+            return;
+        }
         if (mAvTransportUrl != null) soap(mAvTransportUrl, mAvTransportType, "Stop", "");
     }
 
@@ -221,15 +244,20 @@ public final class DlnaRendererControl {
         return mName != null ? mName : mClient;
     }
 
+    /** True for a Google TV / Chromecast (controlled with the Cast protocol). */
+    public boolean isGoogleCast() {
+        return mGoogle != null;
+    }
+
     public boolean isFound() {
-        return mAvTransportUrl != null;
+        return mGoogle != null || mAvTransportUrl != null;
     }
 
     // ------------------------------------------------------------------------------ discovery
 
     /** Looks for the device (SSDP search, answered by the device itself); retried at most every 10 s. */
     public synchronized boolean find() {
-        if (mAvTransportUrl != null) return true;
+        if (mGoogle != null || mAvTransportUrl != null) return true;
         long now = System.currentTimeMillis();
         if (now - mLastSearch < 8_000) return false;
         mLastSearch = now;
@@ -332,6 +360,7 @@ public final class DlnaRendererControl {
     // -------------------------------------------------------------------------------- actions
 
     public State poll(boolean withVolume) {
+        if (mGoogle != null) return mGoogle.poll();
         State state = new State();
         if (!find()) return state;
         String info = soap(mAvTransportUrl, mAvTransportType, "GetTransportInfo", "");
@@ -359,14 +388,26 @@ public final class DlnaRendererControl {
     }
 
     public void play() {
+        if (mGoogle != null) {
+            mGoogle.play();
+            return;
+        }
         if (find()) soap(mAvTransportUrl, mAvTransportType, "Play", "<Speed>1</Speed>");
     }
 
     public void pause() {
+        if (mGoogle != null) {
+            mGoogle.pause();
+            return;
+        }
         if (find()) soap(mAvTransportUrl, mAvTransportType, "Pause", "");
     }
 
     public void seekTo(int seconds) {
+        if (mGoogle != null) {
+            mGoogle.seekTo(seconds);
+            return;
+        }
         if (!find()) return;
         int s = Math.max(0, seconds);
         String padded = formatTime(s);
@@ -398,6 +439,7 @@ public final class DlnaRendererControl {
 
     /** @return the volume that was set, or -1 */
     public int changeVolume(int delta) {
+        if (mGoogle != null) return mGoogle.changeVolume(delta);
         if (!find() || mRenderingUrl == null) return -1;
         String v = soap(mRenderingUrl, mRenderingType, "GetVolume", "<Channel>Master</Channel>");
         int current;
@@ -473,6 +515,7 @@ public final class DlnaRendererControl {
 
     /** The last command the player refused or did not answer, e.g. "Pause: HTTP 500, UPnP error 701". */
     public String getLastError() {
+        if (mGoogle != null) return mGoogle.getLastError();
         return sLastErrorHolder.get();
     }
 

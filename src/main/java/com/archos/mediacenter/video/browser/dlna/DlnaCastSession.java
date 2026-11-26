@@ -9,6 +9,19 @@ public final class DlnaCastSession {
     private static volatile Video sVideo;
     private static volatile boolean sActive;
     private static volatile Runnable sListener;
+    private static volatile boolean sServerStartedByCast;
+
+    /** The DLNA server was not running when the cast began: the cast started it, so the cast also stops it. */
+    static void setServerStartedByCast(boolean startedByCast) {
+        sServerStartedByCast = startedByCast;
+    }
+
+    /** @return true (once) when the DLNA server was started by "Cast on TV" and must stop with it */
+    static boolean takeServerStartedByCast() {
+        boolean started = sServerStartedByCast;
+        sServerStartedByCast = false;
+        return started;
+    }
 
     private DlnaCastSession() {
     }
