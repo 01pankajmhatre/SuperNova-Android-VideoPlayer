@@ -16,9 +16,9 @@
         }
       ],
       "attributes": [],
-      "versionCode": 2676178,
-      "versionName": "6.6.4-20261126.0544",
-      "outputFile": "org.novastudio.player-2676178-6.6.4-20261126.0544-amazon-armeabi-v7a-debug.apk"
+      "versionCode": 2676197,
+      "versionName": "6.6.4-20261126.1058",
+      "outputFile": "org.novastudio.player-2676197-6.6.4-20261126.1058-amazon-armeabi-v7a-debug.apk"
     },
     {
       "type": "ONE_OF_MANY",
@@ -29,9 +29,9 @@
         }
       ],
       "attributes": [],
-      "versionCode": 2676178,
-      "versionName": "6.6.4-20261126.0544",
-      "outputFile": "org.novastudio.player-2676178-6.6.4-20261126.0544-amazon-arm64-v8a-debug.apk"
+      "versionCode": 2676197,
+      "versionName": "6.6.4-20261126.1058",
+      "outputFile": "org.novastudio.player-2676197-6.6.4-20261126.1058-amazon-arm64-v8a-debug.apk"
     }
   ],
   "elementType": "File",

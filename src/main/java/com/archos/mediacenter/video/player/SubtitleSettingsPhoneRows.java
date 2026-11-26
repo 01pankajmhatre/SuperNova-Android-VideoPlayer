@@ -147,6 +147,33 @@ final class SubtitleSettingsPhoneRows {
                     });
                     pills.addView(seg);
                 }
+                // D-pad / TV remote: the row is the focus stop, Left / Right pick the previous / next choice,
+                // Center / Enter goes to the next one (and back to the first after the last)
+                v.setOnKeyListener(new View.OnKeyListener() {
+                    @Override
+                    public boolean onKey(View row, int keyCode, KeyEvent event) {
+                        final Row r = (Row) row.getTag();
+                        if (r == null || r.setting == null || r.options == null) return false;
+                        final boolean down = event.getAction() == KeyEvent.ACTION_DOWN;
+                        final int current = r.setting.get();
+                        final int last = r.options.length - 1;
+                        switch (keyCode) {
+                            case KeyEvent.KEYCODE_DPAD_LEFT:
+                                if (down && current > 0) onUserSet(r, current - 1);
+                                return true;
+                            case KeyEvent.KEYCODE_DPAD_RIGHT:
+                                if (down && current < last) onUserSet(r, current + 1);
+                                return true;
+                            case KeyEvent.KEYCODE_DPAD_CENTER:
+                            case KeyEvent.KEYCODE_ENTER:
+                            case KeyEvent.KEYCODE_NUMPAD_ENTER:
+                                if (down && event.getRepeatCount() == 0) onUserSet(r, current < last ? current + 1 : 0);
+                                return true;
+                            default:
+                                return false;
+                        }
+                    }
+                });
                 break;
             }
             case STEPPER: {

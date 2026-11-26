@@ -916,6 +916,23 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
         return PreferenceManager.getDefaultSharedPreferences(mContext).getBoolean(PREF_NIGHT_MODE, false);
     }
 
+    /** Night mode for a popup / dialog of the player: dims the content view when night mode is on. */
+    public static void applyNightModeTo(Context context, View root) {
+        if (root == null) return;
+        if (PreferenceManager.getDefaultSharedPreferences(context).getBoolean(PREF_NIGHT_MODE, false)) {
+            android.graphics.ColorMatrix matrix = new android.graphics.ColorMatrix(new float[]{
+                    NIGHT_MODE_BRIGHTNESS, 0, 0, 0, 0,
+                    0, NIGHT_MODE_BRIGHTNESS, 0, 0, 0,
+                    0, 0, NIGHT_MODE_BRIGHTNESS, 0, 0,
+                    0, 0, 0, 1, 0});
+            android.graphics.Paint paint = new android.graphics.Paint();
+            paint.setColorFilter(new android.graphics.ColorMatrixColorFilter(matrix));
+            root.setLayerType(View.LAYER_TYPE_HARDWARE, paint);
+        } else {
+            root.setLayerType(View.LAYER_TYPE_NONE, null);
+        }
+    }
+
     /** Dims every colour of the controller (white icons, text, seek bar, pill) when night mode is on. */
     private void applyNightMode(View root) {
         if (root == null) return;
@@ -936,6 +953,19 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
     private void applyNightModeEverywhere() {
         applyNightMode(mControllerViewLeft);
         applyNightMode(mControllerViewRight);
+        applyNightMode(mPhoneGesturePill);          // the top info pill is dimmed too
+    }
+
+    /**
+     * Night mode is a setting, not a state of the views: put it back on the controller and the top info pill
+     * (coming back from another app, a rebuilt controller). The layers are made again so that the dimming
+     * is really drawn.
+     */
+    public void refreshNightMode() {
+        for (View v : new View[]{mControllerViewLeft, mControllerViewRight, mPhoneGesturePill}) {
+            if (v != null) v.setLayerType(View.LAYER_TYPE_NONE, null);
+        }
+        applyNightModeEverywhere();
     }
 
     /** Wires the night mode button of a pill; {@code root} is the controller view that contains it. */
@@ -1109,10 +1139,13 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
     private void setupMiniFocusOrder(View view) {
         View list = view.findViewById(R.id.mobile_list);
         if (PreferenceManager.getDefaultSharedPreferences(mContext).getBoolean(PREF_HIDE_EXTRA_BUTTONS, false)) {
-            // only the playback buttons stay in the control area
-            View toggle = view.findViewById(R.id.mobile_controls_toggle);
-            if (toggle != null) toggle.setVisibility(View.GONE);
-            if (list != null) list.setVisibility(View.GONE);
+            // only backward, play / pause and forward stay in the button row: everything else is hidden
+            for (int id : new int[]{R.id.mobile_left_buttons, R.id.mobile_right_buttons, R.id.mobile_controls_toggle,
+                    R.id.mobile_list, R.id.mobile_more, R.id.mobile_subtitles, R.id.mobile_audio,
+                    R.id.mobile_video_fit}) {
+                View extra = view.findViewById(id);
+                if (extra != null) extra.setVisibility(View.GONE);
+            }
             list = null;
         }
         if (list != null) {
@@ -2378,6 +2411,7 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
         if (log.isDebugEnabled()) log.debug("showControlBar {}", show);
         if (show && !isTVMode && !TVUtils.isTV(mContext)) showSystemBar(false);
         if (show && !mControlBarShowing) {
+            applyNightModeEverywhere();             // night mode stays on when the controls come back
             // compact UI: reopen on the playback row, except when coming back from the video popup that
             // was opened from the Controls button row
             if (mKeepPlainRowOnShow) mKeepPlainRowOnShow = false;
@@ -3921,6 +3955,7 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
         mPhoneGesturePill.setCompoundDrawablePadding((int)(8*density));
         mPhoneGesturePill.setGravity(android.view.Gravity.CENTER_VERTICAL);
         mPhoneGesturePill.setText(text);
+        applyNightMode(mPhoneGesturePill);
         mPhoneGesturePill.setVisibility(View.VISIBLE);
         mPhoneGesturePill.bringToFront();
         mHandler.removeCallbacks(mHidePhonePill);

@@ -213,6 +213,7 @@ public final class PlayerPopup {
         else panel.addView(scroll, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
         int width = Math.min(ctx.getResources().getDisplayMetrics().widthPixels - dp(ctx, 32), dp(ctx, side ? 320 : 300));
+        PlayerController.applyNightModeTo(ctx, panel);   // night mode dims the popups too
         popup.setContentView(panel);
         popup.setWidth(width);
         if (side) {
@@ -375,6 +376,7 @@ public final class PlayerPopup {
         panel.addView(scroll, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
         int width = Math.min(ctx.getResources().getDisplayMetrics().widthPixels - dp(ctx, 32), dp(ctx, 300));
+        PlayerController.applyNightModeTo(ctx, panel);   // night mode dims the popups too
         popup.setContentView(panel);
         popup.setWidth(width);
         popup.setFocusable(true);

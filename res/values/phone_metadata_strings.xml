@@ -51,7 +51,7 @@
     <string name="home_status_count_left">(%1$d left)</string>
     <string name="phone_swipe_pill">Swipe up for buttons</string>
     <string name="phone_hide_extra_buttons">Hide buttons except playback buttons</string>
-    <string name="phone_hide_extra_buttons_summary">Compact UI: keeps only the playback buttons in the control area (List and Controls are hidden). Open the buttons pill with a swipe up or the UP key.</string>
+    <string name="phone_hide_extra_buttons_summary">Compact UI: the button row keeps only backward, play / pause and forward. Open the buttons pill with a swipe up or the UP key for the other buttons.</string>
     <string name="phone_swipe_pill_summary">Swipe up on the controls to show the buttons pill at the play button. The pill is removed from the right side of the controls.</string>
     <string name="phone_remember_brightness">Remember playback brightness</string>
     <string name="phone_remember_brightness_summary">Restore the last player brightness when opening a video.</string>

@@ -617,8 +617,8 @@ public class SubtitleManager {
         if (log.isDebugEnabled()) log.debug("adjustView: isGraphic()={}", isGraphic());
         mActionBarShowing = PlayerController.isActionBarShowing();
         MiscUtils.adjustViewLayoutForInsets(mContext, mRootView, mSubtitleLayout, "mSubtitleLayout",
-                mNavigationBarShowing, mSystemBarShowing, mActionBarShowing, PlayerController.isControlBarShowing(), mIsNavBarOnBottom, mIsGestureAreaShowing,
-                (! isGraphic() && PlayerController.isControlBarShowing() ? PlayerController.getControlBarCurrentHeight() : 0), (isGraphic() ? 0 :mSubtitleEvadedVPos),
+                mNavigationBarShowing, mSystemBarShowing, mActionBarShowing, PlayerController.isControlBarShowing() && ! mCompactControls, mIsNavBarOnBottom, mIsGestureAreaShowing,
+                (! isGraphic() && PlayerController.isControlBarShowing() && ! mCompactControls ? PlayerController.getControlBarCurrentHeight() : 0), (isGraphic() ? 0 :mSubtitleEvadedVPos),
                 false, ! isGraphic(), false, ! isGraphic(),
                 avoidCutout, avoidCutout, avoidCutout, avoidCutout, ! isGraphic(), isGraphic() && ! isFloatingPlayer);
         // The inset pass above still positions mSubtitleLayout (and with it the position-hint
@@ -709,14 +709,25 @@ public class SubtitleManager {
      * is therefore right in every mode and follows any future change to that sizing.
      */
     private boolean mHiddenByControls;
+    private boolean mCompactControls;
 
-    /** Compact UI: the subtitles are hidden while the control area is open (and shown again when it closes). */
+    /**
+     * Compact UI: the subtitles do not move up for the control area, they are hidden in place while it is open
+     * (see setHiddenByControls()).
+     */
+    public void setCompactControls(boolean compact) {
+        if (mCompactControls == compact) return;
+        mCompactControls = compact;
+        adjustView();
+    }
+
+    /** Compact UI: the subtitles are hidden at once while the control area is open and shown when it closes. */
     public void setHiddenByControls(boolean hidden) {
         mHiddenByControls = hidden;
         float alpha = hidden ? 0f : 1f;
         View canvas = getSubtitleCanvas();
-        if (canvas != null) canvas.animate().alpha(alpha).setDuration(150).start();
-        if (mSubtitleLayout != null) mSubtitleLayout.animate().alpha(alpha).setDuration(150).start();
+        if (canvas != null) canvas.setAlpha(alpha);
+        if (mSubtitleLayout != null) mSubtitleLayout.setAlpha(alpha);
     }
 
     private View getSubtitleCanvas() {
@@ -778,7 +789,8 @@ public class SubtitleManager {
         if (mPlayerView == null) return 0;
         View canvas = getSubtitleCanvas();
         if (canvas == null || ! canvas.isLaidOut() || canvas.getHeight() <= 0) return 0;
-        return Math.max(PlayerController.getControlBarClearanceAbove(canvas),
+        // compact UI: the control area hides the subtitles instead of pushing them up
+        return Math.max(mCompactControls ? 0 : PlayerController.getControlBarClearanceAbove(canvas),
                         computeSystemBottomOverlap(canvas));
     }
 

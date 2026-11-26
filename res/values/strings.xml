@@ -563,7 +563,7 @@
     <string name="toast_cutout_aspect_ratio_fix">Turn on fullscreen video with cutouts for correct aspect ratio.</string>
     <string name="preference_enable_cutout_both_sidesx">Cut display equally on both sides</string>
     <string name="preference_enable_cutout_both_sidesx_summary">Cut the display equally on both sides, so the screen is symmetrical.</string>
-    <string name="player_enable_subs">Enable Subs</string>
+    <string name="player_enable_subs">Enable Subtitles</string>
     <string name="category_languages">Subtitles</string>
     <string name="subtitles_hide_default">Hide subtitles by default</string>
     <string name="subtitles_hide_default_summary">Hide regular subtitles by default; matching forced subtitles may still be shown</string>

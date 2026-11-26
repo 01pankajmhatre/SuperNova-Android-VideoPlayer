@@ -887,6 +887,7 @@ public class PlayerActivity extends AppCompatActivity implements PlayerControlle
         mSubtitleManager = new SubtitleManager(mContext, (ViewGroup)mRootView, getWindow().getWindowManager(),false);
         mPlayerController.setOnControlBarVisibilityListener(visible -> {
             if (mSubtitleManager != null) {
+                mSubtitleManager.setCompactControls(mPlayerController != null && mPlayerController.isMiniUi());
                 mSubtitleManager.onControlBarVisibilityChanged();
                 // compact UI: no subtitles under the control area (they stay visible while choosing a subtitle)
                 mSubtitleManager.setHiddenByControls(visible && mPlayerController != null
@@ -1254,6 +1255,7 @@ public class PlayerActivity extends AppCompatActivity implements PlayerControlle
             registerReceiver(mClockReceiver, new IntentFilter(Intent.ACTION_TIME_TICK));
         }
         PlayerBrightnessManager.getInstance().restoreBrightness(this);
+        if (mPlayerController != null) mPlayerController.refreshNightMode();   // night mode survives another app
 
         // Safety net for the rare case where Android genuinely killed the process while
         // backgrounded (memory pressure) and a fresh Player/SubtitleEngine had to be created:
@@ -4009,6 +4011,9 @@ public class PlayerActivity extends AppCompatActivity implements PlayerControlle
             mDialog.setOnDismissListener(this);
             mShowingDialogId = id;
             mDialog.show();
+            if (mDialog.getWindow() != null) {      // night mode dims the dialogs too
+                PlayerController.applyNightModeTo(this, mDialog.getWindow().getDecorView());
+            }
             if (id == DIALOG_AUDIO_DELAY && !TVUtils.isTV(this) && mDialog.getWindow() != null) {
                 DisplayMetrics metrics = getResources().getDisplayMetrics();
                 int width = Math.max(1, Math.min(Math.round(300 * metrics.density),

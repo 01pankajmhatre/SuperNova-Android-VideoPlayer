@@ -162,14 +162,14 @@ public class TrackInfoController implements OnMenuItemClickListener, OnItemClick
      */
     private ArrayList<Object> compactEntries() {
         ArrayList<Object> entries = new ArrayList<>();
-        entries.add(COMPACT_CHECK);
         int count = getTrackCount();                      // position 0 is "none"
         boolean tracksShown = mTrackPosition != 0 && count > 1;
-        // "More options" (the settings rows) come before the streams; a separator only when streams follow
+        // "More options" (the settings rows) first, then the "Enable Subtitles" switch, then the streams
         for (int i = count; i < mTrackItemList.size(); i++) {
             TrackItem item = mTrackItemList.get(i);
             if (item.type != TRACK_SEP) entries.add(item);
         }
+        entries.add(COMPACT_CHECK);
         if (tracksShown) {
             for (int i = count; i < mTrackItemList.size(); i++) {
                 TrackItem item = mTrackItemList.get(i);
@@ -209,6 +209,9 @@ public class TrackInfoController implements OnMenuItemClickListener, OnItemClick
             } else if (getPopupItem(i) instanceof TrackInfo) {
                 return i;
             }
+        }
+        if (mCompactSubtitles) {                      // no streams listed: the cursor starts on "Enable Subtitles"
+            for (int i = 0; i < count; i++) if (compactEntry(i) == COMPACT_CHECK) return i;
         }
         return -1;
     }
@@ -484,6 +487,7 @@ public class TrackInfoController implements OnMenuItemClickListener, OnItemClick
     private void styleListSelector() {
         android.widget.ListView list = mPopup == null ? null : mPopup.getListView();
         if (list != null) {
+            PlayerController.applyNightModeTo(mContext, list);       // night mode dims the audio / subtitle popup
             list.setSelector(new android.graphics.drawable.ColorDrawable(0x66FFFFFF));
             list.setItemsCanFocus(mPopupFooter != null);
             list.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {

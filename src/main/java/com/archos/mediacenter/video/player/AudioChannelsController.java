@@ -138,6 +138,7 @@ final class AudioChannelsController {
             onClosed.run();
         });
         dialog.show();
+        if (dialog.getWindow() != null) PlayerController.applyNightModeTo(activity, dialog.getWindow().getDecorView());
         dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener(button -> {
 
             for (int i = 1; i < sliders.length; i++) {
