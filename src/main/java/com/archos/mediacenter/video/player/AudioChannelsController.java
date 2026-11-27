@@ -175,7 +175,7 @@ final class AudioChannelsController {
         }
     }
 
-    View createAudioPopupControls(boolean supported) {
+    View createAudioPopupControls(boolean supported, Runnable onShowChannels) {
         LinearLayout content = new LinearLayout(activity);
         content.setOrientation(LinearLayout.VERTICAL);
         content.setPadding(dp(12), 0, dp(12), 0);
@@ -197,15 +197,40 @@ final class AudioChannelsController {
         downmix.setClickable(true);
         downmix.setFocusable(true);
         downmix.setContentDescription(name.getText());
+        final TextView[] showChannels = new TextView[1];
         downmix.setOnCheckedChangeListener((button, checked) -> {
             settings.setDownmix(checked);
             apply();
             save();
+            // the channel controls only exist while downmix is off
+            if (showChannels[0] != null) showChannels[0].setVisibility(checked ? View.GONE : View.VISIBLE);
         });
         row.setOnClickListener(view -> downmix.toggle());
         row.setEnabled(supported);
         content.addView(row);
         addGainRow(content, 0, R.string.audio_channels_master).setEnabled(supported);
+
+        // below master gain: opens the audio channels sub popup (only when downmix is disabled)
+        TextView channels = new TextView(activity);
+        channels.setText(activity.getString(R.string.audio_channels_show) + "  \u203A");
+        channels.setTextColor(Color.WHITE);
+        channels.setTextSize(12);
+        channels.setMinHeight(dp(36));
+        channels.setGravity(Gravity.CENTER_VERTICAL);
+        channels.setPadding(dp(8), dp(4), dp(8), dp(4));
+        android.util.TypedValue background = new android.util.TypedValue();
+        if (activity.getTheme().resolveAttribute(android.R.attr.selectableItemBackground, background, true)) {
+            channels.setBackgroundResource(background.resourceId);
+        }
+        channels.setEnabled(supported);
+        channels.setAlpha(supported ? 1f : 0.45f);
+        channels.setFocusable(supported);
+        channels.setClickable(supported);
+        channels.setOnClickListener(view -> { if (onShowChannels != null) onShowChannels.run(); });
+        channels.setVisibility(settings.isDownmix() ? View.GONE : View.VISIBLE);
+        showChannels[0] = channels;
+        content.addView(channels, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         return content;
     }
 

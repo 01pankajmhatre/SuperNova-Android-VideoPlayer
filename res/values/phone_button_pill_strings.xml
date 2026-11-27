@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="phone_button_pill">Buttons pill</string>
+    <string name="phone_button_pill_summary">Compact UI: swipe up to open the pill with list, more, video, audio, subtitles, audio channels and night mode. Applies the next time a video starts.</string>
+    <string name="phone_title_row_buttons">Buttons in title row</string>
+    <string name="phone_title_row_buttons_summary">Compact UI: move list, more, subtitles, audio and video to the right of the video title. Playback buttons stay at the bottom.</string>
+</resources>

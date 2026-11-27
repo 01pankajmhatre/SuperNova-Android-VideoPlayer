@@ -8,6 +8,7 @@ import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.StateListDrawable;
 import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
@@ -56,6 +57,24 @@ public final class PlayerPopup {
     }
 
     private PlayerPopup() {}
+
+    /** Panel that turns the remote's BACK key into the popup's Back action (the previous popup) when it has one. */
+    private static final class BackPanel extends LinearLayout {
+        Runnable onBack;
+
+        BackPanel(Context context) {
+            super(context);
+        }
+
+        @Override
+        public boolean dispatchKeyEventPreIme(KeyEvent event) {
+            if (onBack != null && event.getKeyCode() == KeyEvent.KEYCODE_BACK) {
+                if (event.getAction() == KeyEvent.ACTION_UP && !event.isCanceled()) onBack.run();
+                return true;
+            }
+            return super.dispatchKeyEventPreIme(event);
+        }
+    }
 
     private static int dp(Context c, int v) {
         return (int) (v * c.getResources().getDisplayMetrics().density + 0.5f);
@@ -113,12 +132,19 @@ public final class PlayerPopup {
         boolean anyCheckable = false;
         for (Entry e : entries) anyCheckable |= e.checkable;
 
-        LinearLayout panel = new LinearLayout(ctx);
+        BackPanel panel = new BackPanel(ctx);
         panel.setOrientation(LinearLayout.VERTICAL);
         panel.setBackgroundColor(PANEL_BACKGROUND);
         panel.setPadding(dp(ctx, 6), dp(ctx, 6), dp(ctx, 6), dp(ctx, 6));
 
         final PopupWindow popup = new PopupWindow(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        if (onBack != null) {
+            panel.onBack = () -> {
+                if (!popup.isShowing()) return;
+                popup.dismiss();
+                onBack.run();
+            };
+        }
 
         if (title != null) {
             TextView t = new TextView(ctx);
@@ -297,11 +323,19 @@ public final class PlayerPopup {
         final boolean top = sTopCenter;
         final float textSize = top ? 14f : 12f;
         final boolean[] leaving = {false};
-        LinearLayout panel = new LinearLayout(ctx);
+        BackPanel panel = new BackPanel(ctx);
         panel.setOrientation(LinearLayout.VERTICAL);
         panel.setBackgroundColor(PANEL_BACKGROUND);
         panel.setPadding(dp(ctx, 6), dp(ctx, 6), dp(ctx, 6), dp(ctx, 6));
         final PopupWindow popup = new PopupWindow(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        if (onBack != null) {
+            panel.onBack = () -> {
+                if (!popup.isShowing()) return;
+                leaving[0] = true;
+                popup.dismiss();
+                onBack.run();
+            };
+        }
 
         LinearLayout header = new LinearLayout(ctx);
         header.setGravity(Gravity.CENTER_VERTICAL);

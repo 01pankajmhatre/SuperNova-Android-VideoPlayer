@@ -48,7 +48,8 @@
         android:layout_width="match_parent"
         android:layout_height="@dimen/mobile_compact_controls_button_row_height"
         android:layout_marginStart="@dimen/mobile_compact_pill_margin"
-        android:layout_marginEnd="@dimen/mobile_compact_pill_margin">
+        android:layout_marginEnd="@dimen/mobile_compact_pill_margin"
+        android:layout_marginBottom="@dimen/mobile_button_bar_margin_bottom">
         <include
             layout="@layout/mobile_playback_controls_pill"
             android:layout_width="wrap_content"

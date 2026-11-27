@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="phone_mini_title_center">Center video title</string>
+    <string name="phone_mini_title_center_summary">Compact UI: center the title at the top. Needs "Video title on top" on and "Buttons in title row" off. Applies the next time a video starts.</string>
+    <string name="phone_hide_title_row">Hide title row</string>
+    <string name="phone_hide_title_row_summary">Compact UI: hide the video title row and show the title in the info pill when a video starts or resumes. Needs "Buttons in title row" off. Applies the next time a video starts.</string>
+</resources>

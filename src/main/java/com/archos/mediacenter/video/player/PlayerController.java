@@ -525,6 +525,16 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
     public static final String PREF_YTUI_SEEK_COLOR = "phone_ytui_seek_color";
     /** Hide the buttons except the playback buttons; the buttons pill (swipe up / D-pad UP) has the rest. */
     public static final String PREF_HIDE_EXTRA_BUTTONS = "phone_hide_extra_buttons";
+    /** Compact UI: show the video title in a bar at the top of the screen instead of above the seek bar. */
+    public static final String PREF_MINI_TITLE_ON_TOP = "phone_mini_title_on_top";
+    /** Compact UI: the buttons pill (swipe up / D-pad UP). On by default. */
+    public static final String PREF_BUTTON_PILL = "phone_button_pill";
+    /** Compact UI: subtitles, audio, video, more and list buttons sit at the right of the title row. */
+    public static final String PREF_TITLE_ROW_BUTTONS = "phone_title_row_buttons";
+    /** Compact UI, title on top and no buttons in the title row: centre the title. */
+    public static final String PREF_MINI_TITLE_CENTER = "phone_mini_title_center";
+    /** Compact UI, no buttons in the title row: hide the title row; the title shows in the info pill when a video starts or resumes. */
+    public static final String PREF_HIDE_TITLE_ROW = "phone_hide_title_row";
     private static final String DEFAULT_MINI_SEEK_COLOR = "#2B2BE0";   // the compact UI's original blue
 
     public static String getPhonePlayerStyle(android.content.SharedPreferences prefs) {
@@ -581,7 +591,7 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
         if (compact) updateCompactVideoDetails(view);
         TimeLabelSeekBar seekBar = view.findViewById(R.id.seek_progress);
         // the compact bar has no floating time above the playhead
-        seekBar.setTimeText(compact || mMiniUi ? "" : time);   // the times sit left / right of the bar
+        seekBar.setTimeText(compact ? "" : time);   // mini + standard: floating time above the playhead
     }
 
     private void updateCompactVideoDetails(View view) {
@@ -642,7 +652,119 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
         root.removeView(standard);
         root.addView(mini, index);
         mMiniUi = true;
+        mMiniPillEnabled = PreferenceManager.getDefaultSharedPreferences(mContext).getBoolean(PREF_BUTTON_PILL, true);
         applyMiniSeekColor(mini);
+        moveMiniButtonsToTitleRow(mini);
+        moveMiniTitleToTop(root, mini);
+        hideMiniTitleRow(root);
+    }
+
+    /** "Hide title row" only applies while no buttons sit in the title row. */
+    private boolean hideTitleRowActive() {
+        android.content.SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
+        boolean buttonsInTitle = !hideExtraButtonsActive() && prefs.getBoolean(PREF_TITLE_ROW_BUTTONS, false);
+        return mMiniUi && !buttonsInTitle && prefs.getBoolean(PREF_HIDE_TITLE_ROW, false);
+    }
+
+    /** Collapses the title row to zero height so later setVisibility() calls cannot bring it back. */
+    private void hideMiniTitleRow(RelativeLayout root) {
+        if (!hideTitleRowActive()) return;
+        View row = root.findViewById(R.id.mobile_title_row);
+        if (row == null) return;
+        row.setVisibility(View.GONE);
+        row.setMinimumHeight(0);
+        ViewGroup.LayoutParams lp = row.getLayoutParams();
+        if (lp != null) {
+            lp.height = 0;
+            if (lp instanceof ViewGroup.MarginLayoutParams) ((ViewGroup.MarginLayoutParams) lp).setMargins(0, 0, 0, 0);
+            row.setLayoutParams(lp);
+        }
+    }
+
+    /** Hidden title row: show the video title in the top info pill (called on video start and on resume). */
+    public void showTitleInfoPill() {
+        if (!hideTitleRowActive() || mVideoTitle == null) return;
+        final CharSequence title = mVideoTitle.getText();
+        if (title == null || title.length() == 0) return;
+        mHandler.post(() -> {
+            if (mWindow == null || !hideTitleRowActive()) return;
+            showPhonePill(title.toString(), R.drawable.mobile_ic_play);
+            mHandler.postDelayed(mHidePhonePill, 3000);
+        });
+    }
+
+    /** Compact UI: the buttons pill is switched on in the settings (default). */
+    private boolean mMiniPillEnabled = true;
+
+    /** "Hide buttons except playback buttons" only applies while the buttons pill is on: the pill has the rest. */
+    private boolean hideExtraButtonsActive() {
+        return mMiniPillEnabled
+                && PreferenceManager.getDefaultSharedPreferences(mContext).getBoolean(PREF_HIDE_EXTRA_BUTTONS, false);
+    }
+
+    /** "Buttons in title row" setting: list, more, subtitles, audio and video go to the right of the title, centred vertically. */
+    private void moveMiniButtonsToTitleRow(View mini) {
+        if (hideExtraButtonsActive()
+                || !PreferenceManager.getDefaultSharedPreferences(mContext).getBoolean(PREF_TITLE_ROW_BUTTONS, false)) return;
+        ViewGroup container = mini.findViewById(R.id.mobile_title_buttons);
+        if (container == null) return;
+        for (int id : new int[]{R.id.mobile_list, R.id.mobile_more, R.id.mobile_subtitles, R.id.mobile_audio,
+                R.id.mobile_video_fit}) {
+            View button = mini.findViewById(id);
+            if (button == null || !(button.getParent() instanceof ViewGroup)) continue;
+            ((ViewGroup) button.getParent()).removeView(button);
+            container.addView(button);
+        }
+        container.setVisibility(View.VISIBLE);
+        for (int id : new int[]{R.id.mobile_left_buttons, R.id.mobile_right_buttons}) {
+            View group = mini.findViewById(id);
+            if (group != null) group.setVisibility(View.GONE);
+        }
+    }
+
+    /**
+     * "Title on top" setting: moves the title row out of the bottom bar to the top edge of the screen. It is a
+     * direct child of the controller, so showControlBar() shows / hides it together with the control bar.
+     */
+    private void moveMiniTitleToTop(RelativeLayout root, View mini) {
+        if (!PreferenceManager.getDefaultSharedPreferences(mContext).getBoolean(PREF_MINI_TITLE_ON_TOP, false)) return;
+        View row = mini.findViewById(R.id.mobile_title_row);
+        if (row == null || !(row.getParent() instanceof ViewGroup)) return;
+        ((ViewGroup) row.getParent()).removeView(row);
+        row.setBackgroundResource(R.drawable.mobile_player_gradient_top);
+        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        params.addRule(RelativeLayout.ALIGN_PARENT_TOP);
+        View titleButtons = mini.findViewById(R.id.mobile_title_buttons);
+        boolean buttonsInTitle = titleButtons != null && titleButtons.getVisibility() == View.VISIBLE;
+        TextView title = row.findViewById(R.id.mobile_video_title);
+        if (title != null && !buttonsInTitle
+                && PreferenceManager.getDefaultSharedPreferences(mContext).getBoolean(PREF_MINI_TITLE_CENTER, false)) {
+            title.setGravity(Gravity.CENTER);
+            title.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+            title.setPaddingRelative(0, 0, 0, 0);
+        }
+        root.setClipToPadding(false);   // the gradient is drawn behind the status bar / cutout area
+        root.addView(row, params);
+        row.setVisibility(View.GONE);
+        applyMiniTopTitleInsets(row, 0, 0);
+    }
+
+    /** Top title: touches the top edge; the text keeps the same distance from it as the button bar has from the bottom. */
+    private void applyMiniTopTitleInsets(View row, int left, int right) {
+        int top = row.getParent() instanceof View ? ((View) row.getParent()).getPaddingTop() : 0;
+        int spacing = mContext.getResources().getDimensionPixelSize(R.dimen.mobile_controls_padding_bottom)
+                + mContext.getResources().getDimensionPixelSize(R.dimen.mobile_button_bar_margin_bottom);
+        int side = swipeDp(16) + mContext.getResources().getDimensionPixelSize(R.dimen.mobile_controls_title_track_margin);
+        row.setPaddingRelative(left + side, top + spacing, right + side, swipeDp(24));
+        ViewGroup.LayoutParams params = row.getLayoutParams();
+        if (params instanceof ViewGroup.MarginLayoutParams) {
+            ViewGroup.MarginLayoutParams margins = (ViewGroup.MarginLayoutParams) params;
+            if (margins.topMargin != -top) {
+                margins.topMargin = -top;   // start at the very top, above the controller's safe-area padding
+                row.setLayoutParams(margins);
+            }
+        }
     }
 
     public boolean isMiniUi() {
@@ -679,13 +801,21 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
 
     /** Compact UI: keeps the control area (seek bar included) on screen without a timeout while a popup is open. */
     public void showWhilePopupOpen() {
-        if (mSwipePillShowing) dismissSwipePillImmediately();
-        show(FLAG_SIDE_ALL_EXCEPT_UNLOCK_INSTRUCTIONS, 0);
+        hideWhileVideoPopupOpen();   // any button popup hides the buttons pill and the compact control bar
+    }
+
+    /** A button popup is gone: bring back the buttons pill when the popup was opened from it, else the control bar. */
+    public void showAfterPopup(boolean openedFromPill) {
+        if (openedFromPill && mMiniUi && mSwipePill != null && swipePillEnabled()) {
+            if (!mSwipePillShowing) showSwipePill();
+        } else {
+            show();
+        }
     }
 
     /** Compact UI: while the video popup (fit / zoom / aspect ratio / decoder) is open, no control is shown. */
     public void hideWhileVideoPopupOpen() {
-        mKeepPlainRowOnShow = isPlainRowOpen();
+        if (mControlBarShowing) mKeepPlainRowOnShow = isPlainRowOpen();   // not again while a popup hands over to another
         if (mSwipePillShowing) dismissSwipePillImmediately();
         cancelFadeOut();
         hide();
@@ -859,7 +989,7 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
     /** Compact UI + remote: seek bar -> DOWN -> playback buttons, playback buttons -> UP -> seek bar. */
     private void setupMiniFocusOrder(View view) {
         View list = view.findViewById(R.id.mobile_list);
-        if (PreferenceManager.getDefaultSharedPreferences(mContext).getBoolean(PREF_HIDE_EXTRA_BUTTONS, false)) {
+        if (hideExtraButtonsActive()) {
             // only backward, play / pause and forward stay in the button row: everything else is hidden
             for (int id : new int[]{R.id.mobile_left_buttons, R.id.mobile_right_buttons, R.id.mobile_controls_toggle,
                     R.id.mobile_list, R.id.mobile_more, R.id.mobile_subtitles, R.id.mobile_audio,
@@ -1062,7 +1192,7 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
     private final Runnable mAutoDismissSwipePill = () -> dismissSwipePill(true);
 
     private boolean swipePillEnabled() {
-        if (mMiniUi) return true;   // compact UI: the buttons pill is always available (swipe up / D-pad UP)
+        if (mMiniUi) return mMiniPillEnabled;   // compact UI: "Buttons pill" setting (swipe up / D-pad UP)
         return false;
     }
 
@@ -1101,7 +1231,8 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
         // Center of the seek bar's line, relative to the overlay (works while the control bar is hidden too).
         int[] overlayLocation = new int[2];
         mSwipePillOverlay.getLocationOnScreen(overlayLocation);
-        lp.topMargin = Math.max(0, swipeSeekCenterY() - overlayLocation[1] - height / 2);
+        // shifted a little down from the seek bar line
+        lp.topMargin = Math.max(0, swipeSeekCenterY() - overlayLocation[1] - height / 2 + swipeDp(16));
 
         // Full width of the pill with its buttons.
         actions.setVisibility(View.VISIBLE);
@@ -1327,6 +1458,13 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
         pill.findViewById(R.id.mobile_audio).setOnClickListener(optionsListener);
         pill.findViewById(R.id.mobile_subtitles).setOnClickListener(optionsListener);
         pill.findViewById(R.id.mobile_more).setOnClickListener(optionsListener);
+        View pillList = pill.findViewById(R.id.mobile_list);
+        if (pillList != null) {
+            pillList.setVisibility(View.VISIBLE);
+            pillList.setOnClickListener(button -> {
+                if (mContext instanceof PlayerActivity) ((PlayerActivity) mContext).showMobileVideoList();
+            });
+        }
         bindNightModeButton(root, pill);
         setupSwipePill(root, pill);
     }
@@ -1926,6 +2064,10 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
                 || mControllerView.getPaddingBottom() != 0) {
             mControllerView.setPadding(0, top, 0, 0);
             updateTopTitleBackground();
+        }
+        if (mMiniUi) {
+            View topTitle = mControllerView.findViewById(R.id.mobile_title_row);
+            if (topTitle != null && topTitle.getParent() == mControllerView) applyMiniTopTitleInsets(topTitle, left, right);
         }
         if (mControlBar != null) {
             int paddingTop = mContext.getResources().getDimensionPixelSize(R.dimen.mobile_controls_padding_top);
@@ -3595,6 +3737,8 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
 
     private boolean mPhoneTouch, mPhoneCancelled;
     private boolean mDetectStandardDoubleTap;
+    /** The touch started in the top 20% of the screen: no brightness / volume swipe from there. */
+    private boolean mPhoneTopZone;
     private int mPhoneAxis, mPhoneStartPosition, mPhoneSeekPosition, mPhoneStartVolume, mPhoneStartBrightness;
     private float mPhoneDownX, mPhoneDownY;
     private TextView mPhoneGesturePill;
@@ -3837,6 +3981,7 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
             if (mDetectStandardDoubleTap) mStandardTapDetector.onTouchEvent(event);
             mPhoneTouch = true;
             mPhoneCancelled = false;
+            mPhoneTopZone = event.getRawY() < 0.2f * Math.max(1, mWindow.getDecorView().getHeight());
             mPhoneAxis = 0;
             mPhoneDownX = event.getRawX();
             mPhoneDownY = event.getRawY();
@@ -3868,7 +4013,7 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
                     mPhoneSwipeSpeed = 0;
                 }
                 cancelStandardTapDetection();
-                if (mPhoneAxis == 2 && !mSwipeBottomZone) {
+                if (mPhoneAxis == 2 && !mSwipeBottomZone && !mPhoneTopZone) {
                     // Start the vertical gesture from the value that is current right now, and
                     // measure the swipe from this point so the value does not jump at the start.
                     mPhoneDownY = event.getRawY();
@@ -3912,7 +4057,7 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
                         mHandler.postDelayed(mHidePhonePill, 1200);
                     }
                 }
-            } else if (mPhoneAxis == 2 && !mSwipeBottomZone) {
+            } else if (mPhoneAxis == 2 && !mSwipeBottomZone && !mPhoneTopZone) {
                 float x = phoneTouchXFraction(mPhoneDownX);
                 if (x < PHONE_SIDE_GESTURE_WIDTH) {
                     int level = Math.max(0, Math.min(30, mPhoneStartBrightness + Math.round(dy / height * 30)));
@@ -4411,8 +4556,8 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
         // DOWN
         if (first) {
             if (!mControlBarShowing || focus == null) {
-                showControlBar();                                             // hidden -> controls, cursor on the seek bar
-                mHandler.post(this::focusSeekBar);
+                showControlBar();                                             // hidden -> controls, cursor on the button bar
+                mHandler.post(this::focusButtonBar);
             } else {
                 show(FLAG_SIDE_CONTROL_BAR | FLAG_SIDE_ACTION_BAR | FLAG_SIDE_SYSTEM_BAR, SHOW_TIMEOUT);
                 if (timeline) focusMiniPlaybackRow();                         // seek bar -> playback buttons
@@ -4534,9 +4679,9 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
             if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN && !isTVMenuDisplayed && !mIsStopped
                     && !mControlBarShowing && swipePillEnabled()) {
                 if (event.getAction() == KeyEvent.ACTION_DOWN) {
-                    // DOWN opens the control area and leaves the cursor on the seek bar
+                    // DOWN opens the control area and leaves the cursor on the button bar
                     show(FLAG_SIDE_CONTROL_BAR | FLAG_SIDE_ACTION_BAR | FLAG_SIDE_SYSTEM_BAR, SHOW_TIMEOUT);
-                    mHandler.postDelayed(this::focusSeekBar, 150);
+                    mHandler.postDelayed(this::focusButtonBar, 150);
                 }
                 return true;
             }
@@ -4850,7 +4995,7 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
                 if (keyCode == KeyEvent.KEYCODE_DPAD_UP || keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
                     if (down) {
                         showControlBar();
-                        mHandler.post(mMiniUi ? this::focusSeekBar : this::focusPhonePlayButton);
+                        mHandler.post(this::focusButtonBar);
                     }
                     return true;
                 }
@@ -4877,6 +5022,20 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
         if (!seek.isShown() || !seek.requestFocus()) {
             mHandler.postDelayed(() -> {
                 if (mProgress != null && mProgress.isShown()) mProgress.requestFocus();
+            }, 200);
+        }
+    }
+
+    /** Puts the D-pad cursor on the play / pause button of the button bar (retries once while the controls fade in). */
+    private void focusButtonBar() {
+        if (mControllerViewLeft == null) return;
+        View play = mControllerViewLeft.findViewById(R.id.pause);
+        if (play == null) return;
+        play.setFocusable(true);
+        if (!play.isShown() || !play.requestFocus()) {
+            mHandler.postDelayed(() -> {
+                View p = mControllerViewLeft == null ? null : mControllerViewLeft.findViewById(R.id.pause);
+                if (p != null && p.isShown()) p.requestFocus();
             }, 200);
         }
     }

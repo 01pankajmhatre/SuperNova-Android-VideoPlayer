@@ -1256,6 +1256,7 @@ public class PlayerActivity extends AppCompatActivity implements PlayerControlle
         }
         PlayerBrightnessManager.getInstance().restoreBrightness(this);
         if (mPlayerController != null) mPlayerController.refreshNightMode();   // night mode survives another app
+        if (mPlayerController != null) mPlayerController.showTitleInfoPill();
 
         // Safety net for the rare case where Android genuinely killed the process while
         // backgrounded (memory pressure) and a fresh Player/SubtitleEngine had to be created:
@@ -2226,6 +2227,7 @@ public class PlayerActivity extends AppCompatActivity implements PlayerControlle
 
     private void showAudioChannelsDialog() {
         if (mAudioChannels != null) {
+            popupOpened();
             if (!TVUtils.isTV(this) && mPlayerController != null) mPlayerController.setPhoneTrackPopupOpen(true);
             mAudioChannels.show(mPlayer != null && mPlayer.supportsChannelProcessing());
         }
@@ -2237,7 +2239,16 @@ public class PlayerActivity extends AppCompatActivity implements PlayerControlle
         return (mode == 1 || mode == 2) && !pcmProcessing;
     }
 
+    /** The audio channels sub popup was opened from the audio More options panel: reopen that panel when it closes. */
+    private boolean mReturnToAudioMore;
+
     private void onAudioChannelsClosed() {
+        if (mPlayerController != null && mReturnToAudioMore && !mStopped) {
+            mReturnToAudioMore = false;
+            showAudioMoreOptions();   // BACK / Close: previous popup
+            return;
+        }
+        mReturnToAudioMore = false;
         if (mPlayerController != null) mPlayerController.setPhoneTrackPopupOpen(false);
         if (mPlayerController == null || mStopped) return;
         refreshAudioTracksTVMenu();
@@ -3083,6 +3094,7 @@ public class PlayerActivity extends AppCompatActivity implements PlayerControlle
         mSubtitleInfoController.setSubtitlePlaybackUnavailable(
                 mPlayer != null && mPlayer.isUsingAndroidPlaybackEngine()
                         ? this::showSubtitleEnginePrompt : null);
+        popupOpened();
         mPlayerController.hideSwipePillForPanel();
         mPlayerController.setPhoneTrackPopupOpen(true);
         final Runnable subtitleDismissed = () -> {
@@ -3091,9 +3103,7 @@ public class PlayerActivity extends AppCompatActivity implements PlayerControlle
                 return;
             }
             if (mShowingDialogId == DIALOG_SUBTITLE_SETTINGS) return;
-            mPlayerController.setPhoneTrackPopupOpen(false);
-            mPlayerController.show();
-            restoreOptionsButtonFocus();
+            popupClosed();
         };
         if (mPlayerController.isMiniUi()) {
             // compact UI: top centre, the control area stays visible while the popup is open
@@ -3106,9 +3116,29 @@ public class PlayerActivity extends AppCompatActivity implements PlayerControlle
 
     /** Compact UI: a video / subtitle / audio popup is gone, the control area may time out again. */
     private void miniPopupClosed() {
-        mPlayerController.setPhoneTrackPopupOpen(false);
-        mPlayerController.show();
-        restoreOptionsButtonFocus();
+        popupClosed();
+    }
+
+    /** Bumped whenever a button popup (or sub popup) opens, so a popup that hands over to another one is not "closed". */
+    private int mPopupGeneration;
+
+    private void popupOpened() {
+        mPopupGeneration++;
+    }
+
+    /**
+     * A button popup went away. Waits one loop pass: when a child popup or the previous popup opened in the
+     * meantime nothing happens (the opening flow goes on), otherwise the buttons pill (popup opened from the
+     * pill) or the control bar comes back.
+     */
+    private void popupClosed() {
+        final int generation = mPopupGeneration;
+        getWindow().getDecorView().post(() -> {
+            if (generation != mPopupGeneration || isFinishing() || mPlayerController == null) return;
+            mPlayerController.setPhoneTrackPopupOpen(false);
+            mPlayerController.showAfterPopup(mLastOptionsFromPill);
+            restoreOptionsButtonFocus();
+        });
     }
 
     /** Remote: the cursor goes back to the button (control area or buttons pill) that opened the popup. */
@@ -3137,6 +3167,7 @@ public class PlayerActivity extends AppCompatActivity implements PlayerControlle
 
     /** Compact UI video popup: the picture is what matters, so every control is hidden while it is open. */
     private void openMiniVideoPopupState(boolean mini) {
+        popupOpened();
         PlayerPopup.setTopCenter(mini);
         if (!mini) return;
         mPlayerController.setPhoneTrackPopupOpen(true);
@@ -3144,6 +3175,7 @@ public class PlayerActivity extends AppCompatActivity implements PlayerControlle
     }
 
     private void openMiniPopupState(boolean mini) {
+        popupOpened();
         PlayerPopup.setTopCenter(mini);
         if (!mini) return;
         mPlayerController.setPhoneTrackPopupOpen(true);   // the control area stays on screen while the popup is open
@@ -3158,7 +3190,7 @@ public class PlayerActivity extends AppCompatActivity implements PlayerControlle
         java.util.ArrayList<PlayerPopup.Entry> entries = new java.util.ArrayList<>();
         for (int title : titles) entries.add(new PlayerPopup.Entry(getText(title), true, false, false));
         PlayerPopup.videoList(this, getText(R.string.phone_video_menu), entries,
-                index -> showVideoChoices(titles[index]), false, mPlayerController::show,
+                index -> showVideoChoices(titles[index]), false, this::popupClosed,
                 mini ? this::miniPopupClosed : null);
     }
 
@@ -3222,15 +3254,14 @@ public class PlayerActivity extends AppCompatActivity implements PlayerControlle
 
     /** Audio streams only, bottom right above the seek bar; "More options" opens the panel with the other audio settings. */
     private void showPhoneAudioPopup() {
+        popupOpened();
         mPlayerController.setPhoneTrackPopupOpen(true);
         final Runnable audioDismissed = () -> {
             if (mAudioMoreOpen) {   // the options panel took over, keep the controls as they are
                 mAudioMoreOpen = false;
                 return;
             }
-            mPlayerController.setPhoneTrackPopupOpen(false);
-            mPlayerController.show();
-            restoreOptionsButtonFocus();
+            popupClosed();
         };
         if (mPlayerController.isMiniUi()) {
             // compact UI: top centre, the control area stays visible while the popup is open
@@ -3261,13 +3292,13 @@ public class PlayerActivity extends AppCompatActivity implements PlayerControlle
             options.add(new PlayerPopup.Option(getText(R.string.phone_subtitle_default_font), true, null,
                     this::clearCustomSubtitleFont));
         }
+        popupOpened();
         mPlayerController.setPhoneTrackPopupOpen(true);
         PlayerPopup.optionsPanel(this, getText(R.string.phone_subtitle_options_title), options, null,
                 this::showPhoneSubtitlePopup,
                 () -> {
                     if (mShowingDialogId == DIALOG_SUBTITLE_SETTINGS) return;
-                    mPlayerController.setPhoneTrackPopupOpen(false);
-                    mPlayerController.show();
+                    popupClosed();
                 });
     }
 
@@ -3323,16 +3354,21 @@ public class PlayerActivity extends AppCompatActivity implements PlayerControlle
             options.add(new PlayerPopup.Option(getText(R.string.pref_audio_parameters_title), true, null,
                     this::showSoundSettings));
         }
+        final android.widget.PopupWindow[] optionsPopup = new android.widget.PopupWindow[1];
         View audioControls = mAudioChannels == null ? null : mAudioChannels.createAudioPopupControls(
                 mPlayer != null && mPlayer.supportsChannelProcessing()
-                        && com.archos.medialib.LibAvos.isAvailable());
-        mPlayerController.setPhoneTrackPopupOpen(true);
-        PlayerPopup.optionsPanel(this, getText(R.string.phone_audio_options_title), options, audioControls,
-                this::showPhoneAudioPopup,
+                        && com.archos.medialib.LibAvos.isAvailable(),
                 () -> {
-                    mPlayerController.setPhoneTrackPopupOpen(false);
-                    mPlayerController.show();
+                    // "Show audio channels": the channel controls open as a sub popup; closing it comes back here
+                    mReturnToAudioMore = true;
+                    if (optionsPopup[0] != null) optionsPopup[0].dismiss();
+                    showAudioChannelsDialog();
                 });
+        popupOpened();
+        mPlayerController.setPhoneTrackPopupOpen(true);
+        optionsPopup[0] = PlayerPopup.optionsPanel(this, getText(R.string.phone_audio_options_title), options, audioControls,
+                this::showPhoneAudioPopup,
+                this::popupClosed);
     }
 
     /**
@@ -3411,7 +3447,7 @@ public class PlayerActivity extends AppCompatActivity implements PlayerControlle
                                 : R.string.mobile_player_list_files), entries,
                         index -> com.archos.mediacenter.video.utils.PlayUtils.startVideo(this, videos.get(index),
                                 PlayerService.RESUME_FROM_LAST_POS, false, 0, null, -1),
-                        false, mPlayerController::show, mini ? this::miniPopupClosed : null);
+                        false, this::popupClosed, mini ? this::miniPopupClosed : null);
             });
         }, "player-list").start();
     }
@@ -3463,6 +3499,11 @@ public class PlayerActivity extends AppCompatActivity implements PlayerControlle
             entries.add(new PlayerPopup.Entry(getText(R.string.mobile_player_night_mode), true, true,
                     mPlayerController.isNightModeUi()));
         }
+        popupOpened();
+        if (mPlayerController != null && mPlayerController.isMiniUi()) {
+            mPlayerController.setPhoneTrackPopupOpen(true);
+            mPlayerController.hideWhileVideoPopupOpen();   // the buttons pill and the control bar stay hidden while it is open
+        }
         PlayerPopup.sideList(this, getString(R.string.mobile_player_more), entries,
                 index -> {
                     if (index == 0) {
@@ -3475,7 +3516,7 @@ public class PlayerActivity extends AppCompatActivity implements PlayerControlle
                     else if (index == shown.size()) showPlaybackEnginePicker();
                     else onOptionsItemSelected(shown.get(index));
                 },
-                () -> mPlayerController.show());
+                this::popupClosed);
     }
 
     private void showPlaybackEnginePicker() {
@@ -4210,6 +4251,7 @@ public class PlayerActivity extends AppCompatActivity implements PlayerControlle
             mProgressView.setVisibility(View.GONE);
             PlayerService.sPlayerService.setAudioFilt();
             mPlayerController.start();
+            mPlayerController.showTitleInfoPill();
             // Now that the video is loaded, Video info should be avalaible
             if (mInfoMenuItem != null) {
                 mInfoMenuItem.setVisible(mStreamingUri != null);

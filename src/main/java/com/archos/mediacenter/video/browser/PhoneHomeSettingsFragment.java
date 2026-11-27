@@ -114,15 +114,76 @@ public class PhoneHomeSettingsFragment extends PreferenceFragmentCompat {
         doubleTap.setSummary(R.string.phone_standard_tap_zones_summary);
         doubleTap.setDefaultValue(true);
         playback.addPreference(doubleTap);
-        final androidx.preference.CheckBoxPreference hideExtraButtons =
-                new androidx.preference.CheckBoxPreference(requireContext());
+        SwitchPreferenceCompat buttonPill = new SwitchPreferenceCompat(requireContext());
+        buttonPill.setKey(PlayerController.PREF_BUTTON_PILL);
+        buttonPill.setTitle(R.string.phone_button_pill);
+        buttonPill.setSummary(R.string.phone_button_pill_summary);
+        buttonPill.setDefaultValue(true);
+        playback.addPreference(buttonPill);
 
         // the buttons pill (swipe up / UP on the remote) has the other buttons: the control area can keep only playback
+        final SwitchPreferenceCompat hideExtraButtons = new SwitchPreferenceCompat(requireContext());
         hideExtraButtons.setKey(PlayerController.PREF_HIDE_EXTRA_BUTTONS);
         hideExtraButtons.setTitle(R.string.phone_hide_extra_buttons);
         hideExtraButtons.setSummary(R.string.phone_hide_extra_buttons_summary);
         hideExtraButtons.setDefaultValue(false);
         playback.addPreference(hideExtraButtons);
+
+        final SwitchPreferenceCompat titleRowButtons = new SwitchPreferenceCompat(requireContext());
+        titleRowButtons.setKey(PlayerController.PREF_TITLE_ROW_BUTTONS);
+        titleRowButtons.setTitle(R.string.phone_title_row_buttons);
+        titleRowButtons.setSummary(R.string.phone_title_row_buttons_summary);
+        titleRowButtons.setDefaultValue(false);
+        playback.addPreference(titleRowButtons);
+
+        final SwitchPreferenceCompat titleOnTop = new SwitchPreferenceCompat(requireContext());
+        titleOnTop.setKey(PlayerController.PREF_MINI_TITLE_ON_TOP);
+        titleOnTop.setTitle(R.string.phone_mini_title_on_top);
+        titleOnTop.setSummary(R.string.phone_mini_title_on_top_summary);
+        titleOnTop.setDefaultValue(false);
+        playback.addPreference(titleOnTop);
+
+        final SwitchPreferenceCompat titleCenter = new SwitchPreferenceCompat(requireContext());
+        titleCenter.setKey(PlayerController.PREF_MINI_TITLE_CENTER);
+        titleCenter.setTitle(R.string.phone_mini_title_center);
+        titleCenter.setSummary(R.string.phone_mini_title_center_summary);
+        titleCenter.setDefaultValue(false);
+        playback.addPreference(titleCenter);
+
+        final SwitchPreferenceCompat hideTitleRow = new SwitchPreferenceCompat(requireContext());
+        hideTitleRow.setKey(PlayerController.PREF_HIDE_TITLE_ROW);
+        hideTitleRow.setTitle(R.string.phone_hide_title_row);
+        hideTitleRow.setSummary(R.string.phone_hide_title_row_summary);
+        hideTitleRow.setDefaultValue(false);
+        playback.addPreference(hideTitleRow);
+
+        // Settings that do not apply right now are greyed out, never hidden.
+        // state: 0 = pill, 1 = hide extra buttons, 2 = buttons in title row, 3 = title on top
+        final android.content.SharedPreferences saved =
+                androidx.preference.PreferenceManager.getDefaultSharedPreferences(requireContext());
+        final boolean[] state = {
+                saved.getBoolean(PlayerController.PREF_BUTTON_PILL, true),
+                saved.getBoolean(PlayerController.PREF_HIDE_EXTRA_BUTTONS, false),
+                saved.getBoolean(PlayerController.PREF_TITLE_ROW_BUTTONS, false),
+                saved.getBoolean(PlayerController.PREF_MINI_TITLE_ON_TOP, false)};
+        final Runnable updateStates = () -> {
+            boolean hidden = state[0] && state[1];            // extra buttons live in the pill only
+            boolean buttonsInTitle = state[2] && !hidden;     // buttons really sit in the title row
+            hideExtraButtons.setEnabled(state[0]);
+            titleRowButtons.setEnabled(!hidden);
+            titleCenter.setEnabled(state[3] && !buttonsInTitle);
+            hideTitleRow.setEnabled(!buttonsInTitle);
+        };
+        updateStates.run();
+        final androidx.preference.Preference[] prefs = {buttonPill, hideExtraButtons, titleRowButtons, titleOnTop};
+        for (int i = 0; i < prefs.length; i++) {
+            final int index = i;
+            prefs[i].setOnPreferenceChangeListener((preference, value) -> {
+                state[index] = Boolean.TRUE.equals(value);
+                updateStates.run();
+                return true;
+            });
+        }
 
         addAction(playback, R.string.phone_poster_tap, activity == null ? null : activity::showPosterTapPicker);
 

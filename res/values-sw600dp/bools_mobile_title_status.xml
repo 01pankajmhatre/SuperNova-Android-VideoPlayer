@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- System time + battery percent at the right of the phone player title row (off on tablets). -->
+    <bool name="mobile_title_status_enabled">false</bool>
+</resources>

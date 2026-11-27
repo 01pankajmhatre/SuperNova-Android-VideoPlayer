@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="phone_mini_title_on_top">Video title on top</string>
+    <string name="phone_mini_title_on_top_summary">Compact UI: show the video title at the top of the screen instead of above the seek bar. Applies the next time a video starts.</string>
+</resources>
