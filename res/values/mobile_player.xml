@@ -84,4 +84,6 @@
     <string name="mobile_player_list_episodes">Episodes</string>
     <string name="mobile_player_list_files">Files in this folder</string>
     <string name="mobile_player_list_empty">No other videos found</string>
+    <string name="mobile_player_strip">Episodes / movies</string>
+    <string name="mobile_player_strip_empty">No episodes or movies found for this video</string>
 </resources>

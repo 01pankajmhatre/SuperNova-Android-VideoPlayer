@@ -1024,14 +1024,36 @@ public class MainActivity extends BrowserActivity implements ExternalPlayerWithR
     /** Settings > Movie details page: the standard phone page, or the real TV details page (TV layout). */
     void showDetailsStylePicker() {
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        final boolean tvLayout = com.archos.mediacenter.video.info.VideoInfoActivity.isTvLayoutEnabled(this);
+        final boolean page3 = com.archos.mediacenter.video.info.VideoInfoActivity.isPage3Enabled(this);
         new androidx.appcompat.app.AlertDialog.Builder(this)
                 .setTitle(R.string.phone_details_style)
                 .setSingleChoiceItems(new CharSequence[]{getString(R.string.phone_details_style_standard),
-                        getString(R.string.phone_details_style_tvlayout)},
-                        com.archos.mediacenter.video.info.VideoInfoActivity.isTvLayoutEnabled(this) ? 1 : 0,
+                        getString(R.string.phone_details_style_tvlayout),
+                        getString(R.string.phone_details_style_page3)},
+                        tvLayout ? 1 : page3 ? 2 : 0,
                         (dialog, which) -> {
                             preferences.edit()
                                     .putBoolean(com.archos.mediacenter.video.info.VideoInfoActivity.PREF_TV_LAYOUT_DETAILS, which == 1)
+                                    .putBoolean(com.archos.mediacenter.video.info.VideoInfoActivity.PREF_PHONE_DETAILS_PAGE3, which == 2)
+                                    .apply();
+                            dialog.dismiss();
+                        })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
+    }
+
+    /** Settings > TV show details page: standard episode page, or page 2 (the movie page 3 style). */
+    void showTvShowDetailsStylePicker() {
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle(R.string.tvshow_details_style)
+                .setSingleChoiceItems(new CharSequence[]{getString(R.string.tvshow_details_style_standard),
+                        getString(R.string.tvshow_details_style_page2)},
+                        com.archos.mediacenter.video.info.VideoInfoActivity.isTvShowPage2Enabled(this) ? 1 : 0,
+                        (dialog, which) -> {
+                            preferences.edit()
+                                    .putBoolean(com.archos.mediacenter.video.info.VideoInfoActivity.PREF_TVSHOW_DETAILS_PAGE2, which == 1)
                                     .apply();
                             dialog.dismiss();
                         })

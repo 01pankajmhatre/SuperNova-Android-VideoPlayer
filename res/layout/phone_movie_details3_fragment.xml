@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent" android:layout_height="match_parent" tools:ignore="InconsistentLayout">
+    <ImageView android:id="@+id/backdrop" android:alpha="0" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="centerCrop" app:srcCompat="@drawable/genres_banner" android:contentDescription="@null" />
+    <androidx.coordinatorlayout.widget.CoordinatorLayout android:layout_width="match_parent" android:orientation="vertical" android:layout_alignParentTop="true" android:layout_height="match_parent">
+        <include layout="@layout/phone_movie_details3_content" />
+        <androidx.appcompat.widget.Toolbar android:id="@+id/titlebar" android:layout_width="match_parent" android:layout_height="wrap_content" app:contentInsetLeft="0dp" app:contentInsetStart="0dp" android:layout_margin="0dp" android:background="@android:color/transparent" android:paddingStart="0dip" android:minHeight="?attr/actionBarSize" android:visibility="gone">
+            
+            </androidx.appcompat.widget.Toolbar>
+        <com.google.android.material.floatingactionbutton.FloatingActionButton android:id="@+id/play_toolbar" android:layout_gravity="bottom|end" android:layout_width="wrap_content" android:layout_margin="@dimen/fab_margin" android:layout_height="wrap_content" android:clickable="true" android:focusable="true" android:src="@drawable/button_icon_play" android:visibility="gone" app:elevation="4dp" android:contentDescription="@string/play_selection" />
+    </androidx.coordinatorlayout.widget.CoordinatorLayout>
+</RelativeLayout>

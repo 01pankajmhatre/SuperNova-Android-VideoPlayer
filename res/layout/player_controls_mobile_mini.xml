@@ -152,7 +152,7 @@
                 android:contentDescription="@string/mobile_player_forward"
                 app:srcCompat="@drawable/mobile_ic_forward" />
         </LinearLayout>
-        <!-- left aligned: "List" (episodes of the season, or the videos in the folder), then "More" -->
+        <!-- left aligned: "List" (episodes / movies strip), then "More" -->
         <LinearLayout
             android:id="@+id/mobile_left_buttons"
             android:layout_width="wrap_content"
@@ -162,9 +162,9 @@
             android:gravity="center_vertical"
             android:orientation="horizontal">
             <ImageButton
-                android:id="@+id/mobile_list"
+                android:id="@+id/mobile_strip"
                 style="@style/MobilePlayerButton"
-                android:contentDescription="@string/mobile_player_list"
+                android:contentDescription="@string/mobile_player_strip"
                 app:srcCompat="@drawable/mobile_ic_list" />
             <ImageButton
                 android:id="@+id/mobile_more"

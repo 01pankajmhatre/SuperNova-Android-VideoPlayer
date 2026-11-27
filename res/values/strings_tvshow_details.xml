@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="tvshow_details_style">TV show details page</string>
+    <string name="tvshow_details_style_standard">Standard page</string>
+    <string name="tvshow_details_style_page2">Page 2 (backdrop, title, rating, genre and plot in one container)</string>
+</resources>

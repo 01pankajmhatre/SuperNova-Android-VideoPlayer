@@ -3141,6 +3141,17 @@ public class PlayerActivity extends AppCompatActivity implements PlayerControlle
         });
     }
 
+    /** TV: the strip is gone (back / pick): the video stays alone on screen, the control bar is not shown again. */
+    private void stripClosedNoControls() {
+        final int generation = mPopupGeneration;
+        getWindow().getDecorView().post(() -> {
+            if (generation != mPopupGeneration || isFinishing() || mPlayerController == null) return;
+            mPlayerController.setPhoneTrackPopupOpen(false);
+            mLastOptionsButtonId = 0;
+            mLastOptionsFromPill = false;
+        });
+    }
+
     /** Remote: the cursor goes back to the button (control area or buttons pill) that opened the popup. */
     private void restoreOptionsButtonFocus() {
         final int id = mLastOptionsButtonId;
@@ -3372,84 +3383,125 @@ public class PlayerActivity extends AppCompatActivity implements PlayerControlle
     }
 
     /**
-     * Compact UI "List" button: the other episodes of the season when a TV show episode is playing,
-     * otherwise the videos in the folder of the playing video. Picking one plays it.
+     * Compact UI list button: a thumbnail strip with all episodes of the show (video thumbnails) when a TV show
+     * episode is playing, or all movies, recently added first (posters), when a movie is playing.
      */
-    public void showMobileVideoList() {
+    public void showMobileVideoStrip() {
         final VideoDbInfo info = mVideoInfo;
         final Uri current = mUri;
         final long currentId = mVideoId;
         if (current == null) return;
         new Thread(() -> {
-            final boolean episodes = info != null && info.isShow && info.scraperShowId != null;
             final ArrayList<com.archos.mediacenter.video.browser.adapters.object.Video> videos = new ArrayList<>();
+            boolean episodes = false;
+            long rowId = -1;
             android.database.Cursor c = null;
             try {
-                if (episodes) {
-                    com.archos.mediacenter.video.browser.loader.EpisodesLoader loader =
-                            new com.archos.mediacenter.video.browser.loader.EpisodesLoader(this,
-                                    Long.parseLong(info.scraperShowId.trim()), info.scraperSeasonNr, false);
-                    c = getContentResolver().query(loader.getUri(), loader.getProjection(), loader.getSelection(),
-                            loader.getSelectionArgs(), loader.getSortOrder());
-                } else {
+                final android.net.Uri base = com.archos.mediaprovider.video.VideoStore.Video.Media.EXTERNAL_CONTENT_URI;
+                final String showCol = com.archos.mediaprovider.video.VideoStore.Video.VideoColumns.SCRAPER_SHOW_ID;
+                final String movieCol = com.archos.mediaprovider.video.VideoStore.Video.VideoColumns.SCRAPER_MOVIE_ID;
+                final String[] lookup = {"_id", showCol, movieCol};
+                long showId = -1, movieId = -1;
+                // look the playing video up in the library: by id, then by path
+                if (currentId > 0) {
+                    c = getContentResolver().query(base, lookup, "_id=?", new String[]{String.valueOf(currentId)}, null);
+                }
+                if (c == null || !c.moveToFirst()) {
+                    if (c != null) c.close();
                     String full = "file".equals(current.getScheme()) ? current.getPath() : current.toString();
-                    String decoded = Uri.decode(full);
-                    String folder = full.substring(0, full.lastIndexOf('/') + 1);
-                    String folderDecoded = decoded.substring(0, decoded.lastIndexOf('/') + 1);
-                    com.archos.mediacenter.video.browser.loader.AllVideosLoader loader =
-                            new com.archos.mediacenter.video.browser.loader.AllVideosLoader(this);
-                    c = getContentResolver().query(loader.getUri(), loader.getProjection(),
-                            "(_data LIKE ? OR _data LIKE ?)", new String[]{folder + "%", folderDecoded + "%"},
-                            "_data COLLATE NOCASE ASC");
+                    c = getContentResolver().query(base, lookup, "_data=? OR _data=?",
+                            new String[]{full, Uri.decode(full)}, null);
+                }
+                if (c != null && c.moveToFirst()) {
+                    rowId = c.getLong(0);
+                    showId = c.getLong(1);
+                    movieId = c.getLong(2);
+                }
+                if (c != null) c.close();
+                c = null;
+                if (showId <= 0 && info != null && info.isShow && info.scraperShowId != null) {
+                    try {
+                        showId = Long.parseLong(info.scraperShowId.trim());
+                    } catch (NumberFormatException ignored) {
+                    }
+                }
+                if (showId > 0) {
+                    episodes = true;
+                    c = getContentResolver().query(base,
+                            com.archos.mediacenter.video.browser.loader.VideoLoader.mProjection,
+                            showCol + "=?", new String[]{String.valueOf(showId)},
+                            com.archos.mediaprovider.video.VideoStore.Video.VideoColumns.SCRAPER_E_SEASON + ", "
+                                    + com.archos.mediaprovider.video.VideoStore.Video.VideoColumns.SCRAPER_E_EPISODE);
+                } else if (movieId > 0) {
+                    c = getContentResolver().query(base,
+                            com.archos.mediacenter.video.browser.loader.VideoLoader.mProjection,
+                            movieCol + ">0", null,
+                            com.archos.mediaprovider.video.VideoStore.MediaColumns.DATE_ADDED + " DESC");
                 }
                 if (c != null) {
                     com.archos.mediacenter.video.browser.adapters.mappers.VideoCursorMapper mapper =
                             new com.archos.mediacenter.video.browser.adapters.mappers.VideoCursorMapper();
                     mapper.bindColumns(c);
-                    String prefix = null;
                     while (c.moveToNext()) {
                         Object o = mapper.bind(c);
-                        if (!(o instanceof com.archos.mediacenter.video.browser.adapters.object.Video)) continue;
-                        com.archos.mediacenter.video.browser.adapters.object.Video v =
-                                (com.archos.mediacenter.video.browser.adapters.object.Video) o;
-                        if (!episodes) {
-                            // only the files directly in this folder, not in its sub folders
-                            String path = v.getFilePath();
-                            if (path == null) continue;
-                            int slash = path.lastIndexOf('/');
-                            if (prefix == null) prefix = path.substring(0, slash + 1);
-                            if (!path.startsWith(prefix) || path.indexOf('/', prefix.length()) >= 0) continue;
+                        if (o instanceof com.archos.mediacenter.video.browser.adapters.object.Video) {
+                            videos.add((com.archos.mediacenter.video.browser.adapters.object.Video) o);
                         }
-                        videos.add(v);
                     }
                 }
             } catch (Exception e) {
-                log.warn("showMobileVideoList failed", e);
+                log.warn("showMobileVideoStrip failed", e);
             } finally {
                 if (c != null) c.close();
             }
+            final boolean episodesList = episodes;
+            final long playingId = rowId > 0 ? rowId : currentId;
             runOnUiThread(() -> {
                 if (isFinishing() || mPlayerController == null) return;
                 if (videos.isEmpty()) {
-                    Toast.makeText(this, R.string.mobile_player_list_empty, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, R.string.mobile_player_strip_empty, Toast.LENGTH_SHORT).show();
                     return;
                 }
                 final boolean mini = mPlayerController.isMiniUi();
                 mPlayerController.hideSwipePillForPanel();
-                openMiniPopupState(mini);
-                java.util.ArrayList<PlayerPopup.Entry> entries = new java.util.ArrayList<>();
-                for (com.archos.mediacenter.video.browser.adapters.object.Video v : videos) {
-                    String name = v.getName();
-                    if (name == null || name.isEmpty()) name = String.valueOf(v.getFileUri().getLastPathSegment());
-                    entries.add(new PlayerPopup.Entry(name, true, true, v.getId() == currentId));
+                openMiniVideoPopupState(mini);
+                java.util.ArrayList<PlayerVideoStrip.Item> items = new java.util.ArrayList<>();
+                int currentIndex = 0;
+                for (int i = 0; i < videos.size(); i++) {
+                    com.archos.mediacenter.video.browser.adapters.object.Video v = videos.get(i);
+                    Uri image = null;
+                    String top = v.getName();
+                    String bottom;
+                    String path = v.getFilePath();
+                    String fileName = path != null && path.indexOf('/') >= 0
+                            ? Uri.decode(path.substring(path.lastIndexOf('/') + 1))
+                            : String.valueOf(v.getFileUri().getLastPathSegment());
+                    if (v instanceof com.archos.mediacenter.video.browser.adapters.object.Episode) {
+                        // above: episode number and name, below: tv show name
+                        com.archos.mediacenter.video.browser.adapters.object.Episode e =
+                                (com.archos.mediacenter.video.browser.adapters.object.Episode) v;
+                        image = e.getPictureUri();
+                        String number = String.format(java.util.Locale.US, "S%02dE%02d", e.getSeasonNumber(), e.getEpisodeNumber());
+                        String epName = e.getEpisodeName();
+                        top = epName == null || epName.isEmpty() ? number : number + " \u00B7 " + epName;
+                        bottom = e.getShowName();
+                        if (bottom == null || bottom.isEmpty()) bottom = fileName;
+                    } else {
+                        // above: movie name, below: actual file name
+                        bottom = fileName;
+                    }
+                    if (image == null) image = v.getPosterUri();
+                    if (top == null || top.isEmpty()) top = fileName;
+                    if (v.getId() == playingId) currentIndex = i;
+                    items.add(new PlayerVideoStrip.Item(image, top, bottom, v.getId() == playingId));
                 }
-                PlayerPopup.videoList(this, getText(episodes ? R.string.mobile_player_list_episodes
-                                : R.string.mobile_player_list_files), entries,
+                final boolean tv = TVUtils.isTV(this) || ArchosFeatures.isAndroidTV(this);
+                PlayerVideoStrip.show(this, episodesList, items, currentIndex,
                         index -> com.archos.mediacenter.video.utils.PlayUtils.startVideo(this, videos.get(index),
                                 PlayerService.RESUME_FROM_LAST_POS, false, 0, null, -1),
-                        false, this::popupClosed, mini ? this::miniPopupClosed : null);
+                        tv ? this::stripClosedNoControls : this::popupClosed);
             });
-        }, "player-list").start();
+        }, "player-strip").start();
     }
 
     public void showMobilePlaybackOptions(View anchor) {

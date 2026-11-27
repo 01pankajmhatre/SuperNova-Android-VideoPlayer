@@ -35,11 +35,20 @@ public class DelayedBackgroundLoader extends ImageProcessor {
     private final long mSleep;
     private float mBackgroundAlpha;
     private String lastLoaded;
+    private final int mMaxWidth;
+    private final int mMaxHeight;
 
     public DelayedBackgroundLoader(Context context, long sleep, float backgroundAlpha) {
+        this(context, sleep, backgroundAlpha, 1920, 1080);
+    }
+
+    /** maxWidth/maxHeight: decode limit; use large values to keep the original image size. */
+    public DelayedBackgroundLoader(Context context, long sleep, float backgroundAlpha, int maxWidth, int maxHeight) {
         mContext = context;
         mSleep = sleep;
         mBackgroundAlpha = backgroundAlpha;
+        mMaxWidth = maxWidth;
+        mMaxHeight = maxHeight;
     }
 
     @Override
@@ -52,7 +61,7 @@ public class DelayedBackgroundLoader extends ImageProcessor {
             if (file != null) {
                 image.download(mContext);
                 try {
-                    taskItem.result.bitmap = BitmapUtils.decodeSampledBitmapFromFile(file, 1920, 1080);
+                    taskItem.result.bitmap = BitmapUtils.decodeSampledBitmapFromFile(file, mMaxWidth, mMaxHeight);
                     if (log.isDebugEnabled()) log.debug("background:loadBitmap - loaded.");
                 } catch (OutOfMemoryError e) {
                     log.error("background:loadBitmap - No more memory!", e);

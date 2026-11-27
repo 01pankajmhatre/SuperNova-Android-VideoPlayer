@@ -220,7 +220,7 @@
 
         <ListPreference
             android:key="mobile_player_volume_step"
-            android:defaultValue="1"
+            android:defaultValue="5"
             android:title="@string/mobile_player_volume_step_title"
             android:dialogMessage="@string/mobile_player_volume_step_message"
             android:entries="@array/mobile_player_volume_step_entries"

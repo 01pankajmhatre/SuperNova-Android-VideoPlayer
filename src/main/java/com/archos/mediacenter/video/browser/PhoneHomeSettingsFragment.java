@@ -65,6 +65,7 @@ public class PhoneHomeSettingsFragment extends PreferenceFragmentCompat {
         addAction(appearance, R.string.home_background_theme, activity == null ? null : () -> activity.showHomeColorPicker(false));
         addAction(appearance, R.string.home_card_color, activity == null ? null : () -> activity.showHomeColorPicker(true));
         addAction(appearance, R.string.phone_details_style, activity == null ? null : activity::showDetailsStylePicker);
+        addAction(appearance, R.string.tvshow_details_style, activity == null ? null : activity::showTvShowDetailsStylePicker);
 
         SwitchPreferenceCompat pin = new SwitchPreferenceCompat(requireContext());
         pin.setKey(BrowserCategory.KEEP_HOME_SOURCES_VISIBLE);

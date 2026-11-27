@@ -254,6 +254,8 @@ public class VideoInfoActivityFragment extends Fragment implements LoaderManager
     // Backdrop
     private ImageViewSetter mBackgroundSetter;
     private ImageProcessor mBackgroundLoader;
+    private ImageProcessor mBackgroundLoaderTop;
+    private ImageViewSetter mBackgroundSetterTop;
     private ImageView mApplicationBackdrop;
     private String mCurrentBackdropUrl;
 
@@ -356,6 +358,8 @@ public class VideoInfoActivityFragment extends Fragment implements LoaderManager
     private int mHeaderHeight;
     private boolean mIsPortraitMode;
     private boolean mPhoneMovieDetails;
+    private boolean mPage3;
+    private static final int PAGE3_OVERLAY = 0x9907111C;
 
     private static boolean isFileManagerServiceBound = false;
 
@@ -418,7 +422,16 @@ public class VideoInfoActivityFragment extends Fragment implements LoaderManager
         mPhoneMovieDetails = requireActivity().getIntent().getBooleanExtra(
                 VideoInfoActivity.EXTRA_PHONE_MOVIE_DETAILS, false)
                 && ThemeManager.getInstance(requireContext()).isPhoneMode(requireContext());
-        mRoot = inflater.inflate(mPhoneMovieDetails ? R.layout.phone_movie_details_fragment
+        final boolean page3 = mPhoneMovieDetails
+                && requireActivity().getIntent().getBooleanExtra(VideoInfoActivity.EXTRA_PHONE_DETAILS_PAGE3, false);
+        mPage3 = page3;
+        if (page3) {
+            // page background keeps the original faint backdrop; the top image of the container is at 100%
+            mBackgroundLoaderTop = new DelayedBackgroundLoader(getActivity(), 0, 1f, 8192, 8192); // original size
+            mBackgroundSetterTop = new ImageViewSetter(getActivity(), ImageViewSetterConfiguration.Builder.createNew().setUseCache(false).build());
+        }
+        mRoot = inflater.inflate(page3 ? R.layout.phone_movie_details3_fragment
+                : mPhoneMovieDetails ? R.layout.phone_movie_details_fragment
                 : R.layout.video_info2_fragment, container, false);
         if (requireActivity().getIntent().getBooleanExtra(VideoInfoActivity.EXTRA_TV_LAYOUT, false)) {
             // TV layout on the phone: square cards (some cards are added a little later, so repeat)
@@ -465,8 +478,8 @@ public class VideoInfoActivityFragment extends Fragment implements LoaderManager
                 getActivity().getOnBackPressedDispatcher().onBackPressed();
             }
         });
-        mEpisodeTitleView =(TextView) mTitleBarContent.findViewById(R.id.episode_title_view);
-        mEpisodeSeasonView =(TextView) mTitleBarContent.findViewById(R.id.s_e_text_view);
+        mEpisodeTitleView =(TextView) mRoot.findViewById(R.id.episode_title_view);
+        mEpisodeSeasonView =(TextView) mRoot.findViewById(R.id.s_e_text_view);
 
         mTitleTextView = (TextView) mTitleBarContent.findViewById(R.id.title_view);
 
@@ -834,15 +847,42 @@ public class VideoInfoActivityFragment extends Fragment implements LoaderManager
     }
 
     private void setBackground() {
-        mButtonsContainer.setCardBackgroundColor(mColor);
-        mFileInfoContainer.setCardBackgroundColor(mColor);
-        mSubtitleContainer.setCardBackgroundColor(mColor);
-        ((CardView) mScrapDetailsCard).setCardBackgroundColor(mColor);
-        ((CardView)mPosterImageView.getParent().getParent()).setCardBackgroundColor(mColor);
-        mScraperPlotContainer.setCardBackgroundColor(mColor);
-        mActionButtonsContainer.setCardBackgroundColor(mColor);
+        // page 3: dark overlay on every container instead of the poster colour
+        final int cardColor = mColor; // same background as the original movie detail page
+        mButtonsContainer.setCardBackgroundColor(cardColor);
+        mFileInfoContainer.setCardBackgroundColor(cardColor);
+        mSubtitleContainer.setCardBackgroundColor(cardColor);
+        ((CardView) mScrapDetailsCard).setCardBackgroundColor(cardColor);
+        ((CardView)mPosterImageView.getParent().getParent()).setCardBackgroundColor(cardColor);
+        mScraperPlotContainer.setCardBackgroundColor(mPage3 ? android.graphics.Color.TRANSPARENT : cardColor);
+        mActionButtonsContainer.setCardBackgroundColor(mPage3 ? tvActionsColor(mColor) : mColor);
         if(mNavActionButtonsContainer!=null)
-            mNavActionButtonsContainer.setCardBackgroundColor(mColor);
+            mNavActionButtonsContainer.setCardBackgroundColor(cardColor);
+        if (mPage3) {
+            final ViewGroup flow = mRoot.findViewById(R.id.action_flow);
+            if (flow != null)
+                for (int k = 0; k < flow.getChildCount(); k++)
+                    if (flow.getChildAt(k) instanceof CardView)
+                        ((CardView) flow.getChildAt(k)).setCardBackgroundColor(mColor); // original page button colour
+            squareCards(mRoot);
+            // all containers below the hero use the same text size as the plot (14sp)
+            setTextSizeRecursive(mButtonsContainer, 14f);
+            setTextSizeRecursive(mFileInfoContainer, 14f);
+            setTextSizeRecursive(mSubtitleContainer, 14f);
+            setTextSizeRecursive(mRoot.findViewById(R.id.action_flow), 14f);
+            setTextSizeRecursive(mRoot.findViewById(R.id.cast_panel), 14f);
+            setTextSizeRecursive(mRoot.findViewById(R.id.menu_buttons_container), 14f);
+            final View heroCard = mRoot.findViewById(R.id.poster_action_container);
+            if (heroCard instanceof CardView) ((CardView) heroCard).setCardBackgroundColor(cardColor);
+            final View castPanelView = mRoot.findViewById(R.id.cast_panel);
+            if (castPanelView != null) castPanelView.setBackgroundColor(cardColor);
+            final View castCard = mRoot.findViewById(R.id.cast_card);
+            if (castCard instanceof CardView) ((CardView) castCard).setCardBackgroundColor(cardColor);
+            final ViewGroup menuBox = mRoot.findViewById(R.id.menu_buttons_container);
+            if (menuBox != null)
+                for (int k = 0; k < menuBox.getChildCount(); k++)
+                    menuBox.getChildAt(k).setBackgroundColor(cardColor);
+        }
         if(mSecondaryTitleBar!=null)
             mTitleBarContent.setBackgroundColor(mColor);
         if(!mIsLaunchFromPlayer)
@@ -860,6 +900,7 @@ public class VideoInfoActivityFragment extends Fragment implements LoaderManager
         if(shouldChangeVideo(mCurrentVideo, video)) {
             if (log.isDebugEnabled()) log.debug("setCurrentVideo: should change video");
             mTitleBar.getMenu().clear();
+            rebuildMenuButtons();
 
             Video oldVideo = mCurrentVideo;
             mCurrentVideo = video;
@@ -978,8 +1019,56 @@ public class VideoInfoActivityFragment extends Fragment implements LoaderManager
         }
     }
 
+    /** Same "darker" colour the TV movie details page uses behind its action buttons (value x 0.8). */
+    private static int tvActionsColor(int color) {
+        final float[] hsv = new float[3];
+        android.graphics.Color.colorToHSV(color, hsv);
+        hsv[2] *= 0.8f;
+        return android.graphics.Color.HSVToColor(hsv);
+    }
+
+    private static void setTextSizeRecursive(View v, float sp) {
+        if (v == null) return;
+        if (v instanceof TextView) ((TextView) v).setTextSize(TypedValue.COMPLEX_UNIT_SP, sp);
+        if (v instanceof ViewGroup) {
+            final ViewGroup g = (ViewGroup) v;
+            for (int i = 0; i < g.getChildCount(); i++) setTextSizeRecursive(g.getChildAt(i), sp);
+        }
+    }
+
+    /** Page 3: shows the toolbar (three-dot) menu items as buttons at the bottom of the page. */
+    private void rebuildMenuButtons() {
+        if (!mPage3 || mRoot == null) return;
+        final ViewGroup box = mRoot.findViewById(R.id.menu_buttons_container);
+        if (box == null) return;
+        box.removeAllViews();
+        final android.view.Menu menu = mTitleBar.getMenu();
+        final float d = getResources().getDisplayMetrics().density;
+        for (int k = 0; k < menu.size(); k++) {
+            final MenuItem item = menu.getItem(k);
+            if (!item.isVisible()) continue;
+            Button b = new Button(requireContext());
+            b.setText(item.getTitle());
+            b.setAllCaps(false);
+            b.setTextSize(14f);
+            b.setTextColor(0xFFFFFFFF);
+            b.setGravity(android.view.Gravity.CENTER_VERTICAL | android.view.Gravity.START);
+            b.setMinHeight((int) (48 * d));
+            b.setBackgroundColor(mColor);
+            android.util.TypedValue tv = new android.util.TypedValue();
+            if (requireContext().getTheme().resolveAttribute(android.R.attr.selectableItemBackground, tv, true))
+                b.setForeground(AppCompatResources.getDrawable(requireContext(), tv.resourceId));
+            b.setOnClickListener(v -> onMenuItemClick(item));
+            ViewGroup.MarginLayoutParams lp = new ViewGroup.MarginLayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            lp.bottomMargin = (int) (8 * d);
+            box.addView(b, lp);
+        }
+    }
+
     private void addMenu(int i, int i2, int i3, int i4) {
         mTitleBar.getMenu().add(i, i2, i3, i4);
+        rebuildMenuButtons();
       /*  if(mSecondaryTitleBar!=null)
             mSecondaryTitleBar.getMenu().add(i, i2, i3, i4);*/
     }
@@ -999,6 +1088,7 @@ public class VideoInfoActivityFragment extends Fragment implements LoaderManager
         }
     }
 
+    // page 3 shows the poster full width, so load it at screen resolution instead of the small thumbnail size
     private Bitmap getThumbnail(Video video, boolean createThumbnail) {
         mBitmap = null;
         Uri imageUri = null;
@@ -1022,6 +1112,7 @@ public class VideoInfoActivityFragment extends Fragment implements LoaderManager
                 mBitmap = Picasso.get()
                         .load(imageUri)
                         .resize(getResources().getDimensionPixelSize(R.dimen.video_info_poster_width), getResources().getDimensionPixelSize(R.dimen.video_info_poster_height))
+                        .config(android.graphics.Bitmap.Config.ARGB_8888)
                         .centerCrop()
                         .get();
             } catch (IOException e) {
@@ -1039,6 +1130,7 @@ public class VideoInfoActivityFragment extends Fragment implements LoaderManager
                             mBitmap = Picasso.get()
                                     .load(imageUri)
                                     .resize(getResources().getDimensionPixelSize(R.dimen.video_info_poster_width), getResources().getDimensionPixelSize(R.dimen.video_info_poster_height))
+                        .config(android.graphics.Bitmap.Config.ARGB_8888)
                                     .centerCrop()
                                     .get();
                         } catch (IOException e) {
@@ -1174,8 +1266,46 @@ public class VideoInfoActivityFragment extends Fragment implements LoaderManager
                 setTextOrHideContainer(mDecoderTextView, decoder, mDecoderTextView);
                 CharSequence audiotrack = VideoInfoCommonClass.getAudioTrackString(videoMetadata, getResources(), getActivity());
                 setTextOrHideContainer(mAudioTrackTextView, audiotrack, mRoot.findViewById(R.id.audio_row));
+                updateQualityBadges(videoMetadata);
             }
         }
+    }
+
+    /** Page 3: resolution (e.g. 1080) and audio channel (e.g. 5.1) badges, same logic as the TV details layout. */
+    private void updateQualityBadges(VideoMetadata metadata) {
+        if (!mPage3 || mRoot == null || metadata == null) return;
+        final View resBox = mRoot.findViewById(R.id.badge_resolution_container);
+        final TextView resText = mRoot.findViewById(R.id.badge_resolution);
+        final View audBox = mRoot.findViewById(R.id.badge_audio_container);
+        final TextView audText = mRoot.findViewById(R.id.badge_audio);
+        if (resBox == null || resText == null || audBox == null || audText == null) return;
+        final int w = metadata.getVideoWidth();
+        final int h = metadata.getVideoHeight();
+        int resId = 0;
+        if (w >= 3840 || h >= 2160) resId = R.string.resolution_4k;
+        else if (w >= 1728 || h >= 1040) resId = R.string.resolution_1080p;
+        else if (w >= 1200 || h >= 720) resId = R.string.resolution_720p;
+        else if (w > 0 && h > 0) resId = R.string.resolution_SD;
+        if (resId != 0) {
+            resText.setText(resId);
+            resBox.setVisibility(View.VISIBLE);
+        } else {
+            resBox.setVisibility(View.GONE);
+        }
+        int audioChannels = -1;
+        for (int n = 0; n < metadata.getAudioTrackNb(); n++) {
+            final String ch = metadata.getAudioTrack(n).channels;
+            if (ch == null) continue;
+            int channels = -1;
+            if (ch.startsWith("7.1")) channels = 7;
+            else if (ch.startsWith("5.1")) channels = 5;
+            else if (ch.startsWith("Stereo")) channels = 2;
+            if (channels > audioChannels) audioChannels = channels;
+        }
+        if (audioChannels == 7) audText.setText(R.string.audio_7_1);
+        else if (audioChannels == 5) audText.setText(R.string.audio_5_1);
+        else if (audioChannels == 2) audText.setText(R.string.audio_2_0);
+        audBox.setVisibility(audioChannels != -1 ? View.VISIBLE : View.GONE);
     }
 
     private void updateSubtitleInfo(VideoMetadata videoMetadata, List<SubtitleManager.SubtitleFile> externalSubs){
@@ -2001,6 +2131,9 @@ public class VideoInfoActivityFragment extends Fragment implements LoaderManager
                             // Only reload backdrop if it's different from the current one (avoids visual glitch when navigating between episodes of the same show)
                             if (newBackdropUrl == null || !newBackdropUrl.equals(mCurrentBackdropUrl)) {
                                 mBackgroundSetter.set(mApplicationBackdrop, mBackgroundLoader, backdrop);
+                                final ImageView topBackdrop = mRoot.findViewById(R.id.backdrop_top);
+                                if (mPage3 && topBackdrop != null && mBackgroundSetterTop != null)
+                                    mBackgroundSetterTop.set(topBackdrop, mBackgroundLoaderTop, backdrop);
                                 mCurrentBackdropUrl = newBackdropUrl;
                             }
                         }

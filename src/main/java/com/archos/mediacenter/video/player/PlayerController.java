@@ -708,7 +708,7 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
                 || !PreferenceManager.getDefaultSharedPreferences(mContext).getBoolean(PREF_TITLE_ROW_BUTTONS, false)) return;
         ViewGroup container = mini.findViewById(R.id.mobile_title_buttons);
         if (container == null) return;
-        for (int id : new int[]{R.id.mobile_list, R.id.mobile_more, R.id.mobile_subtitles, R.id.mobile_audio,
+        for (int id : new int[]{R.id.mobile_strip, R.id.mobile_more, R.id.mobile_subtitles, R.id.mobile_audio,
                 R.id.mobile_video_fit}) {
             View button = mini.findViewById(id);
             if (button == null || !(button.getParent() instanceof ViewGroup)) continue;
@@ -955,7 +955,7 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
     }
 
     private void bindPhoneControlsPill(View view) {
-        if (mMiniUi && view.findViewById(R.id.mobile_list) != null) {
+        if (mMiniUi && view.findViewById(R.id.mobile_strip) != null) {
             bindMiniButtons(view);
             return;
         }
@@ -988,20 +988,19 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
 
     /** Compact UI + remote: seek bar -> DOWN -> playback buttons, playback buttons -> UP -> seek bar. */
     private void setupMiniFocusOrder(View view) {
-        View list = view.findViewById(R.id.mobile_list);
         if (hideExtraButtonsActive()) {
             // only backward, play / pause and forward stay in the button row: everything else is hidden
             for (int id : new int[]{R.id.mobile_left_buttons, R.id.mobile_right_buttons, R.id.mobile_controls_toggle,
-                    R.id.mobile_list, R.id.mobile_more, R.id.mobile_subtitles, R.id.mobile_audio,
+                    R.id.mobile_strip, R.id.mobile_more, R.id.mobile_subtitles, R.id.mobile_audio,
                     R.id.mobile_video_fit}) {
                 View extra = view.findViewById(id);
                 if (extra != null) extra.setVisibility(View.GONE);
             }
-            list = null;
         }
-        if (list != null) {
-            list.setOnClickListener(button -> {
-                if (mContext instanceof PlayerActivity) ((PlayerActivity) mContext).showMobileVideoList();
+        View strip = view.findViewById(R.id.mobile_strip);
+        if (strip != null && !hideExtraButtonsActive()) {
+            strip.setOnClickListener(button -> {
+                if (mContext instanceof PlayerActivity) ((PlayerActivity) mContext).showMobileVideoStrip();
             });
         }
         View seek = view.findViewById(R.id.seek_progress);
@@ -1009,7 +1008,7 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
         if (seek == null || pause == null) return;
         seek.setFocusable(true);
         seek.setNextFocusDownId(R.id.pause);
-        for (int id : new int[]{R.id.mobile_list, R.id.mobile_more, R.id.backward, R.id.pause, R.id.forward,
+        for (int id : new int[]{R.id.mobile_strip, R.id.mobile_more, R.id.backward, R.id.pause, R.id.forward,
                 R.id.mobile_subtitles, R.id.mobile_audio, R.id.mobile_video_fit}) {
             View button = view.findViewById(id);
             if (button != null) button.setNextFocusUpId(R.id.seek_progress);
@@ -1458,13 +1457,6 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
         pill.findViewById(R.id.mobile_audio).setOnClickListener(optionsListener);
         pill.findViewById(R.id.mobile_subtitles).setOnClickListener(optionsListener);
         pill.findViewById(R.id.mobile_more).setOnClickListener(optionsListener);
-        View pillList = pill.findViewById(R.id.mobile_list);
-        if (pillList != null) {
-            pillList.setVisibility(View.VISIBLE);
-            pillList.setOnClickListener(button -> {
-                if (mContext instanceof PlayerActivity) ((PlayerActivity) mContext).showMobileVideoList();
-            });
-        }
         bindNightModeButton(root, pill);
         setupSwipePill(root, pill);
     }
@@ -3512,11 +3504,11 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
     private int getMobileVolumeStep() {
         try {
             String value = PreferenceManager.getDefaultSharedPreferences(mContext)
-                    .getString("mobile_player_volume_step", "1");
+                    .getString("mobile_player_volume_step", "5");
             int maxVolume = mAudioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
             return Math.max(1, Math.min(maxVolume, Integer.parseInt(value)));
         } catch (NumberFormatException | ClassCastException ignored) {
-            return 1;
+            return 5;
         }
     }
 
@@ -4987,6 +4979,17 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
             case KeyEvent.KEYCODE_DPAD_CENTER:
             case KeyEvent.KEYCODE_ENTER:
             case KeyEvent.KEYCODE_NUMPAD_ENTER:
+                if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN && mMiniUi && mControlBarShowing
+                        && mControllerViewLeft.hasFocus()) {
+                    // DOWN on the button bar (not on the seek bar) opens the episodes / movies strip
+                    View focused = mControllerViewLeft.findFocus();
+                    if (focused != null && focused.getId() != R.id.seek_progress) {
+                        if (down && mContext instanceof PlayerActivity) {
+                            ((PlayerActivity) mContext).showMobileVideoStrip();
+                        }
+                        return true;
+                    }
+                }
                 if (mControlBarShowing && mControllerViewLeft.hasFocus()) {
                     // keep the controls on screen while the user navigates, then let the focus system / the button handle the key
                     if (down) show(FLAG_SIDE_CONTROL_BAR | FLAG_SIDE_ACTION_BAR | FLAG_SIDE_SYSTEM_BAR, SHOW_TIMEOUT);

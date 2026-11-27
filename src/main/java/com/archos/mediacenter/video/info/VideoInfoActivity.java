@@ -53,6 +53,20 @@ public class VideoInfoActivity extends AppCompatActivity {
     /** Settings > Movie details page > TV layout: the real TV details page, in portrait, with square cards. */
     public static final String PREF_TV_LAYOUT_DETAILS = "phone_tv_layout_details";
     public static final String EXTRA_TV_LAYOUT = "tv_layout_details";
+    /** Settings > Movie details page > Phone page 3: a copy of the standard phone page (title above the poster, no full page overlay). */
+    public static final String PREF_PHONE_DETAILS_PAGE3 = "phone_details_page3";
+    public static final String EXTRA_PHONE_DETAILS_PAGE3 = "phone_details_page3";
+
+    /** Settings > TV show details page > Page 2: episode details use the page 3 style. */
+    public static final String PREF_TVSHOW_DETAILS_PAGE2 = "tvshow_details_page2";
+
+    public static boolean isTvShowPage2Enabled(Context context) {
+        return androidx.preference.PreferenceManager.getDefaultSharedPreferences(context).getBoolean(PREF_TVSHOW_DETAILS_PAGE2, false);
+    }
+
+    public static boolean isPage3Enabled(Context context) {
+        return androidx.preference.PreferenceManager.getDefaultSharedPreferences(context).getBoolean(PREF_PHONE_DETAILS_PAGE3, false);
+    }
 
     public static boolean isTvLayoutEnabled(Context context) {
         return androidx.preference.PreferenceManager.getDefaultSharedPreferences(context).getBoolean(PREF_TV_LAYOUT_DETAILS, false);
@@ -237,6 +251,9 @@ public class VideoInfoActivity extends AppCompatActivity {
                                       boolean allowTvStylePage) {
         final boolean phoneMovie = currentVideo instanceof com.archos.mediacenter.video.browser.adapters.object.Movie
                 && com.archos.mediacenter.video.utils.ThemeManager.getInstance(context).isPhoneMode(context);
+        final boolean phoneEpisode = currentVideo instanceof com.archos.mediacenter.video.browser.adapters.object.Episode
+                && com.archos.mediacenter.video.utils.ThemeManager.getInstance(context).isPhoneMode(context);
+        final boolean episodePage2 = allowTvStylePage && phoneEpisode && isTvShowPage2Enabled(context);
         // Settings > Movie details page: the standard phone page, or the real TV details page (TV layout)
         final boolean tvLayout = allowTvStylePage && phoneMovie && isTvLayoutEnabled(context);
         if (tvLayout) {
@@ -252,8 +269,9 @@ public class VideoInfoActivity extends AppCompatActivity {
             return tv;
         }
         Intent intent = new Intent(context, VideoInfoActivity.class);
-        intent.putExtra(EXTRA_PHONE_MOVIE_DETAILS, phoneMovie && !tvLayout);   // false: the fragment inflates the TV layout
+        intent.putExtra(EXTRA_PHONE_MOVIE_DETAILS, (phoneMovie && !tvLayout) || episodePage2);   // false: the fragment inflates the TV layout
         intent.putExtra(EXTRA_TV_LAYOUT, tvLayout);
+        intent.putExtra(EXTRA_PHONE_DETAILS_PAGE3, (allowTvStylePage && phoneMovie && !tvLayout && isPage3Enabled(context)) || episodePage2);
         if (currentVideo != null)
             intent.putExtra(VideoInfoActivityFragment.EXTRA_VIDEO, currentVideo);
         if (paths != null)
