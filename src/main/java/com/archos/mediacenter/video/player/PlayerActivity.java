@@ -3458,7 +3458,7 @@ public class PlayerActivity extends AppCompatActivity implements PlayerControlle
         }
         entries.add(new PlayerPopup.Entry(getText(R.string.decoder_engine), true, false, false));
         final boolean nightEntry = mPlayerController != null
-                && (mPlayerController.isYoutubeUi() || mPlayerController.isMiniUi());
+                && mPlayerController.isMiniUi();
         if (nightEntry) {
             entries.add(new PlayerPopup.Entry(getText(R.string.mobile_player_night_mode), true, true,
                     mPlayerController.isNightModeUi()));

@@ -53,16 +53,6 @@ public class VideoInfoActivity extends AppCompatActivity {
     /** Settings > Movie details page > TV layout: the real TV details page, in portrait, with square cards. */
     public static final String PREF_TV_LAYOUT_DETAILS = "phone_tv_layout_details";
     public static final String EXTRA_TV_LAYOUT = "tv_layout_details";
-    /** Settings > Movie details page > TV layout page 2: a separate copy of the TV layout page. */
-    public static final String PREF_TV_LAYOUT2_DETAILS = "phone_tv_layout2_details";
-    public static boolean isTvLayout2Enabled(Context context) {
-        return androidx.preference.PreferenceManager.getDefaultSharedPreferences(context).getBoolean(PREF_TV_LAYOUT2_DETAILS, false);
-    }
-    public static final String PREF_HERO_DETAILS = "phone_hero_details";
-    public static final String EXTRA_HERO_LAYOUT = "hero_layout_details";
-    public static boolean isHeroEnabled(Context context) {
-        return androidx.preference.PreferenceManager.getDefaultSharedPreferences(context).getBoolean(PREF_HERO_DETAILS, false);
-    }
 
     public static boolean isTvLayoutEnabled(Context context) {
         return androidx.preference.PreferenceManager.getDefaultSharedPreferences(context).getBoolean(PREF_TV_LAYOUT_DETAILS, false);
@@ -247,23 +237,11 @@ public class VideoInfoActivity extends AppCompatActivity {
                                       boolean allowTvStylePage) {
         final boolean phoneMovie = currentVideo instanceof com.archos.mediacenter.video.browser.adapters.object.Movie
                 && com.archos.mediacenter.video.utils.ThemeManager.getInstance(context).isPhoneMode(context);
-        // Settings > Movie details page: a separate page that looks like the TV UI details page (the TV UI is not touched)
-        Class<?> target = VideoInfoActivity.class;
+        // Settings > Movie details page: the standard phone page, or the real TV details page (TV layout)
         final boolean tvLayout = allowTvStylePage && phoneMovie && isTvLayoutEnabled(context);
-        final boolean tvLayout2 = allowTvStylePage && phoneMovie && !tvLayout && isTvLayout2Enabled(context);
-        final boolean heroLayout = allowTvStylePage && phoneMovie && !tvLayout && !tvLayout2 && isHeroEnabled(context);
-        if (allowTvStylePage && phoneMovie && !tvLayout && !tvLayout2 && !heroLayout) {
-            if (PhoneAlternateDetailsActivity.isEnabled(context)) {
-                target = PhoneAlternateDetailsActivity.class;
-            } else if (PhoneTvDetailsActivity.isEnabled(context)) {
-                target = PhoneTvDetailsActivity.class;
-            }
-        }
-        if (tvLayout || tvLayout2) {
+        if (tvLayout) {
             // the real TV details page (leanback): sources, trailers, posters, backdrops, links
-            Intent tv = new Intent(context, tvLayout2
-                    ? com.archos.mediacenter.video.leanback.details.PhoneTvLayout2DetailsActivity.class
-                    : com.archos.mediacenter.video.leanback.details.PhoneTvLayoutDetailsActivity.class);
+            Intent tv = new Intent(context, com.archos.mediacenter.video.leanback.details.PhoneTvLayoutDetailsActivity.class);
             tv.putExtra(com.archos.mediacenter.video.leanback.details.VideoDetailsFragment.EXTRA_VIDEO, currentVideo);
             tv.putExtra(com.archos.mediacenter.video.leanback.details.VideoDetailsFragment.EXTRA_LIST_ID, -1L);
             tv.putExtra(com.archos.mediacenter.video.leanback.details.VideoDetailsFragment.EXTRA_FORCE_VIDEO_SELECTION, forceVideoSelection);
@@ -273,10 +251,9 @@ public class VideoInfoActivity extends AppCompatActivity {
                     android.os.SystemClock.elapsedRealtime());
             return tv;
         }
-        Intent intent = new Intent(context, target);
+        Intent intent = new Intent(context, VideoInfoActivity.class);
         intent.putExtra(EXTRA_PHONE_MOVIE_DETAILS, phoneMovie && !tvLayout);   // false: the fragment inflates the TV layout
         intent.putExtra(EXTRA_TV_LAYOUT, tvLayout);
-        intent.putExtra(EXTRA_HERO_LAYOUT, heroLayout);
         if (currentVideo != null)
             intent.putExtra(VideoInfoActivityFragment.EXTRA_VIDEO, currentVideo);
         if (paths != null)

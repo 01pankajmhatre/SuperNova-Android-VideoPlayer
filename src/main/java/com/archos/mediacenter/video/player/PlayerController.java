@@ -500,11 +500,9 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
 
     /** Legacy on/off switch of the compact UI; only read as a fallback when {@link #PREF_PHONE_PLAYER_STYLE} was never set. */
     public static final String PREF_COMPACT_PHONE_PLAYER = "phone_compact_playback_ui";
-    /** Phone playback UI: one of {@link #PHONE_STYLE_STANDARD}, {@link #PHONE_STYLE_COMPACT}, {@link #PHONE_STYLE_YOUTUBE}. */
+    /** Phone playback UI: {@link #PHONE_STYLE_MINI} (Compact), the only phone playback UI. */
     public static final String PREF_PHONE_PLAYER_STYLE = "phone_player_style";
-    public static final String PHONE_STYLE_STANDARD = "standard";
     public static final String PHONE_STYLE_COMPACT = "compact";
-    public static final String PHONE_STYLE_YOUTUBE = "youtube";
     /** The "Compact" setting: title / time line, timeline, one button row: list + more | playback buttons | subtitles, audio, video. */
     public static final String PHONE_STYLE_MINI = "mini";
 
@@ -523,33 +521,21 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
     public static final int MAX_STANDARD_TITLE_SIZE = 28;
     public static final int DEFAULT_STANDARD_TITLE_SIZE = 18;
 
-    // YouTube-style options
-    public static final String PREF_YTUI_CENTER_BUTTONS = "phone_ytui_center_buttons";
-    public static final String PREF_YTUI_PILL_OPACITY = "phone_ytui_pill_opacity";
+    /** "Seek bar color" setting (the key keeps its old name so saved colours still apply). */
     public static final String PREF_YTUI_SEEK_COLOR = "phone_ytui_seek_color";
-    public static final int DEFAULT_YTUI_PILL_OPACITY = 85;           // percent
-    public static final String DEFAULT_YTUI_SEEK_COLOR = "#FF0000";
     /** Hide the buttons except the playback buttons; the buttons pill (swipe up / D-pad UP) has the rest. */
     public static final String PREF_HIDE_EXTRA_BUTTONS = "phone_hide_extra_buttons";
     private static final String DEFAULT_MINI_SEEK_COLOR = "#2B2BE0";   // the compact UI's original blue
 
     public static String getPhonePlayerStyle(android.content.SharedPreferences prefs) {
         String style = prefs.getString(PREF_PHONE_PLAYER_STYLE, null);
-        // The compact style was removed: it (and the legacy compact switch) now means standard.
-        if (PHONE_STYLE_YOUTUBE.equals(style) || PHONE_STYLE_MINI.equals(style)) return style;
-        return PHONE_STYLE_STANDARD;
+        // The standard style was removed: anything else (including the old standard value) is the Compact UI.
+        return PHONE_STYLE_MINI;
     }
 
-    /** True once the YouTube-style control bar has replaced the standard one in this controller. */
-    private boolean mYoutubePhoneControls;
     /** True once the Compact ("mini") control bar has replaced the standard one in this controller. */
     private boolean mMiniUi;
-    /** YouTube-style bar whose buttons pill is always open (landscape); portrait keeps the collapsible pill. */
-    private boolean mYoutubeInlinePill;
 
-    public static final String PREF_SWIPE_PILL = "phone_swipe_up_pill";
-    /** Standard phone UI: no collapsible buttons pill, a plain right aligned row of buttons instead. */
-    public static final String PREF_STANDARD_NO_BUTTON_PILL = "phone_standard_no_button_pill";
     /** Global gesture switches (all phone UI styles), both on by default. */
     public static final String PREF_GESTURE_SWIPE_SEEK = "phone_gesture_swipe_seek";
 
@@ -594,8 +580,8 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
         }
         if (compact) updateCompactVideoDetails(view);
         TimeLabelSeekBar seekBar = view.findViewById(R.id.seek_progress);
-        // compact and YouTube-style bars have no floating time above the playhead
-        seekBar.setTimeText(compact || mYoutubePhoneControls ? "" : time);
+        // the compact bar has no floating time above the playhead
+        seekBar.setTimeText(compact || mMiniUi ? "" : time);   // the times sit left / right of the bar
     }
 
     private void updateCompactVideoDetails(View view) {
@@ -636,45 +622,6 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
             setProgress();
             sendFadeOut(SHOW_TIMEOUT);
         });
-    }
-
-    /**
-     * YouTube-style phone controls: swaps the standard control bar for player_controls_mobile_youtube
-     * (timeline on top, then backward / play / forward, time pill, title pill and the right aligned
-     * buttons pill). The new bar keeps the ids of the standard one so seek, pause, time, pill and
-     * night mode handling are shared.
-     */
-    private void configureYoutubePhoneControls(View view) {
-        if (!PHONE_STYLE_YOUTUBE.equals(getPhonePlayerStyle(PreferenceManager.getDefaultSharedPreferences(mContext)))
-                || !(view instanceof RelativeLayout)
-                || view.findViewById(R.id.mobile_video_title) == null) return;
-
-        RelativeLayout root = (RelativeLayout) view;
-        View standard = root.findViewById(R.id.control_bar);
-        if (standard == null) return;
-        View youtube = LayoutInflater.from(mContext).inflate(R.layout.player_controls_mobile_youtube, root, false);
-        int index = root.indexOfChild(standard);
-        root.removeView(standard);
-        root.addView(youtube, index);
-        mYoutubePhoneControls = true;
-        if (PreferenceManager.getDefaultSharedPreferences(mContext).getBoolean(PREF_YTUI_CENTER_BUTTONS, false)) {
-            // backward / play / forward leave the bottom row and sit in the middle of the screen
-            ViewGroup transport = youtube.findViewById(R.id.mobile_transport);
-            if (transport != null) {
-                for (int id : new int[]{R.id.backward, R.id.pause, R.id.forward}) {
-                    View button = transport.findViewById(id);
-                    if (button != null) transport.removeView(button);
-                }
-                View time = transport.findViewById(R.id.time_current);
-                if (time != null && time.getLayoutParams() instanceof ViewGroup.MarginLayoutParams) {
-                    ((ViewGroup.MarginLayoutParams) time.getLayoutParams()).setMarginStart(0);
-                }
-            }
-            root.addView(LayoutInflater.from(mContext).inflate(R.layout.mobile_ytui_center_transport, root, false));
-        }
-        View buttonBar = youtube.findViewById(R.id.button_bar);
-        mYoutubeInlinePill = buttonBar != null && "inline_pill".equals(buttonBar.getTag());
-        orderYoutubePillButtons(youtube);
     }
 
     /**
@@ -744,32 +691,6 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
         hide();
     }
 
-    /** YouTube-style pill, left to right: subtitles, audio, video, night mode, more. No audio channels button. */
-    private void orderYoutubePillButtons(View youtube) {
-        View actions = youtube.findViewById(R.id.mobile_compact_actions);
-        if (!(actions instanceof ViewGroup) || ((ViewGroup) actions).getChildCount() == 0
-                || !(((ViewGroup) actions).getChildAt(0) instanceof ViewGroup)) return;
-        ViewGroup row = (ViewGroup) ((ViewGroup) actions).getChildAt(0);
-        int[] order = {R.id.mobile_subtitles, R.id.mobile_audio, R.id.mobile_video_fit,
-                R.id.mobile_more};     // night mode lives in the More popup
-        View[] ordered = new View[order.length];
-        for (int i = 0; i < order.length; i++) ordered[i] = row.findViewById(order[i]);
-        View channels = row.findViewById(R.id.mobile_audio_channels);
-        View close = row.findViewById(R.id.mobile_controls_close);
-        View night = row.findViewById(R.id.mobile_night_mode);
-        row.removeAllViews();
-        if (night != null) {
-            night.setVisibility(View.GONE);
-            row.addView(night);
-        }
-        for (View button : ordered) if (button != null) row.addView(button);
-        if (channels != null) {     // hidden: its click binding stays harmless
-            channels.setVisibility(View.GONE);
-            row.addView(channels);
-        }
-        if (close != null) row.addView(close);
-    }
-
     private android.graphics.drawable.GradientDrawable ytuiShape(boolean oval, int color) {
         android.graphics.drawable.GradientDrawable shape = new android.graphics.drawable.GradientDrawable();
         shape.setShape(oval ? android.graphics.drawable.GradientDrawable.OVAL
@@ -777,24 +698,6 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
         shape.setColor(color);
         if (!oval) shape.setCornerRadius(swipeDp(30));      // clamped to a full pill
         return shape;
-    }
-
-    /** Black pill / circle with the configured opacity; optionally with a light press / focus overlay. */
-    private android.graphics.drawable.Drawable ytuiBackground(boolean oval, int color, boolean pressOverlay) {
-        android.graphics.drawable.Drawable[] layers;
-        if (pressOverlay) {
-            android.graphics.drawable.StateListDrawable overlay = new android.graphics.drawable.StateListDrawable();
-            overlay.addState(new int[]{android.R.attr.state_pressed}, ytuiShape(oval, 0x55FFFFFF));
-            overlay.addState(new int[]{android.R.attr.state_focused}, ytuiShape(oval, 0x55FFFFFF));
-            overlay.addState(new int[]{}, ytuiShape(oval, 0));
-            layers = new android.graphics.drawable.Drawable[]{ytuiShape(oval, color), overlay};
-        } else {
-            layers = new android.graphics.drawable.Drawable[]{ytuiShape(oval, color)};
-        }
-        android.graphics.drawable.LayerDrawable drawable = new android.graphics.drawable.LayerDrawable(layers);
-        int inset = swipeDp(2);
-        for (int i = 0; i < layers.length; i++) drawable.setLayerInset(i, inset, inset, inset, inset);
-        return drawable;
     }
 
     private android.graphics.drawable.GradientDrawable ytuiDot(int sizeDp, int color) {
@@ -809,91 +712,9 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
         return bar;
     }
 
-    /** Applies the pill opacity and seek bar color settings to the YouTube-style bar. */
-    private void applyYoutubeStyle(View view) {
-        android.content.SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
-        int opacity = Math.max(0, Math.min(100, prefs.getInt(PREF_YTUI_PILL_OPACITY, DEFAULT_YTUI_PILL_OPACITY)));
-        int pill = Math.round(opacity * 255f / 100f) << 24;          // black with the chosen alpha
-
-        for (int id : new int[]{R.id.backward, R.id.pause, R.id.forward}) {
-            View button = view.findViewById(id);
-            if (button != null) button.setBackground(ytuiBackground(true, pill, true));
-        }
-        for (int id : new int[]{R.id.time_current, R.id.mobile_title_row}) {
-            View pillView = view.findViewById(id);
-            if (pillView != null) pillView.setBackground(ytuiBackground(false, pill, true));
-        }
-        View buttonsPill = view.findViewById(R.id.mobile_compact_pill);
-        if (buttonsPill != null) buttonsPill.setBackground(ytuiBackground(false, pill, false));
-
-        int color;
-        try {
-            color = Color.parseColor(prefs.getString(PREF_YTUI_SEEK_COLOR, DEFAULT_YTUI_SEEK_COLOR));
-        } catch (IllegalArgumentException e) {
-            color = Color.parseColor(DEFAULT_YTUI_SEEK_COLOR);
-        }
-        SeekBar seek = view.findViewById(R.id.seek_progress);
-        if (seek != null) {
-            android.graphics.drawable.LayerDrawable progress = new android.graphics.drawable.LayerDrawable(
-                    new android.graphics.drawable.Drawable[]{
-                            ytuiBar(0x55FFFFFF),
-                            new android.graphics.drawable.ClipDrawable(ytuiBar(color), android.view.Gravity.START,
-                                    android.graphics.drawable.ClipDrawable.HORIZONTAL)});
-            progress.setId(0, android.R.id.background);
-            progress.setId(1, android.R.id.progress);
-            for (int i = 0; i < 2; i++) {
-                progress.setLayerHeight(i, swipeDp(3));
-                progress.setLayerGravity(i, android.view.Gravity.CENTER_VERTICAL);
-            }
-            seek.setProgressDrawable(progress);
-
-            android.graphics.drawable.StateListDrawable thumb = new android.graphics.drawable.StateListDrawable();
-            thumb.addState(new int[]{android.R.attr.state_pressed}, ytuiDot(18, color));
-            thumb.addState(new int[]{android.R.attr.state_focused}, ytuiDot(18, color));
-            thumb.addState(new int[]{}, ytuiDot(12, color));
-            seek.setThumb(thumb);
-            seek.setThumbOffset(0);
-        }
-    }
-
-    /** YouTube-style bar: look, pill state, tap on the title and the D-pad / remote focus chain. */
-    private void bindYoutubePhoneControls(View view) {
-        if (!mYoutubePhoneControls || view.findViewById(R.id.mobile_title_row) == null) return;
-        applyYoutubeStyle(view);
-
-        View pill = view.findViewById(R.id.mobile_compact_pill);
-        if (pill != null && mYoutubeInlinePill) {
-            // buttons always visible in the pill, no toggle / close
-            pill.findViewById(R.id.mobile_controls_toggle).setVisibility(View.GONE);
-            pill.findViewById(R.id.mobile_controls_close).setVisibility(View.GONE);
-            pill.findViewById(R.id.mobile_compact_actions).setVisibility(View.VISIBLE);
-        }
-
-        // tap on the title pill: file details
-        view.findViewById(R.id.mobile_title_row).setOnClickListener(button -> {
-            if (!mIsStopped && mContext instanceof PlayerActivity) {
-                ((PlayerActivity) mContext).showVideoInfos();
-            }
-        });
-
-        // Remote: LEFT on the backward button goes to the right aligned pill, RIGHT on the pill's last
-        // button comes back to backward. Everything in between uses the normal focus search.
-        View backward = view.findViewById(R.id.backward);
-        int lastPillButton = mYoutubeInlinePill ? R.id.mobile_more : R.id.mobile_controls_toggle;
-        View last = view.findViewById(lastPillButton);
-        if (backward != null && last != null) {
-            backward.setNextFocusLeftId(lastPillButton);
-            last.setNextFocusRightId(R.id.backward);
-        }
-    }
-
     // ---- Night mode: dims the white of the player interface -------------------------------------
     public static final String PREF_NIGHT_MODE = "phone_night_mode_ui";
     private static final float NIGHT_MODE_BRIGHTNESS = 0.45f;
-
-    public boolean isYoutubeUi() {
-        return mYoutubePhoneControls;
-    }
 
     public boolean isNightModeUi() {
         return isNightMode();
@@ -984,106 +805,6 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
             sendFadeOut(SHOW_TIMEOUT);
         });
         applyNightMode(root);
-    }
-
-    /**
-     * Standard phone UI with "Disable button pill": no pill background, no open/close buttons; the buttons
-     * are always visible: subtitles, audio, video on the right, more and night mode on the left.
-     * Returns true when applied to this controller view.
-     */
-    private boolean applyPlainButtonRow(View v) {
-        if (isTVMode || TVUtils.isTV(mContext) || mYoutubePhoneControls
-                || v.findViewById(R.id.mobile_compact_transport) != null) return false;
-        android.content.SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
-        if (!PHONE_STYLE_STANDARD.equals(getPhonePlayerStyle(prefs))
-                || !prefs.getBoolean(PREF_STANDARD_NO_BUTTON_PILL, false)) return false;
-        View pill = v.findViewById(R.id.mobile_compact_pill);
-        View actions = v.findViewById(R.id.mobile_compact_actions);
-        if (pill == null || !(actions instanceof ViewGroup) || ((ViewGroup) actions).getChildCount() == 0
-                || !(((ViewGroup) actions).getChildAt(0) instanceof ViewGroup)) return false;
-
-        pill.setBackground(null);
-        // right edge in line with the total time above, centred vertically with the playback buttons
-        pill.setPadding(0, 0, 0, 0);
-        if (pill.getLayoutParams() instanceof ViewGroup.MarginLayoutParams) {
-            ((ViewGroup.MarginLayoutParams) pill.getLayoutParams()).setMarginEnd(0);
-        }
-        pill.findViewById(R.id.mobile_controls_close).setVisibility(View.GONE);
-        pill.setTag("plain_row");
-        actions.setVisibility(View.VISIBLE);
-
-        // Right side, left to right: video, audio, subtitles. Night mode and more go to the left side,
-        // below the elapsed time, unless the title / status already uses the left of the button row.
-        String titlePosition = prefs.getString(PREF_STANDARD_TITLE_POSITION, STANDARD_TITLE_ABOVE_SEEKBAR);
-        boolean leftGroup = !STANDARD_TITLE_BUTTON_ROW.equals(titlePosition)
-                && !prefs.getBoolean(PREF_STANDARD_TITLE_STATUS, false)
-                && v.findViewById(R.id.button_bar) instanceof RelativeLayout;
-        ViewGroup row = (ViewGroup) ((ViewGroup) actions).getChildAt(0);
-        int[] order = leftGroup
-                ? new int[]{R.id.mobile_subtitles, R.id.mobile_audio, R.id.mobile_video_fit}
-                : new int[]{R.id.mobile_subtitles, R.id.mobile_audio, R.id.mobile_video_fit,
-                        R.id.mobile_night_mode, R.id.mobile_more};
-        View[] ordered = new View[order.length];
-        for (int i = 0; i < order.length; i++) ordered[i] = row.findViewById(order[i]);
-        View channels = row.findViewById(R.id.mobile_audio_channels);
-        View close = row.findViewById(R.id.mobile_controls_close);
-        View night = row.findViewById(R.id.mobile_night_mode);
-        View more = row.findViewById(R.id.mobile_more);
-        row.removeAllViews();
-        for (View button : ordered) if (button != null) row.addView(button);
-        // "Controls" button at the right end of the row (see togglePlainControls)
-        View controlsButton = pill.findViewById(R.id.mobile_controls_toggle);
-        if (controlsButton != null) {
-            if (controlsButton.getParent() instanceof ViewGroup) ((ViewGroup) controlsButton.getParent()).removeView(controlsButton);
-            int size = Math.round(44 * mContext.getResources().getDisplayMetrics().density);
-            row.addView(controlsButton, new android.widget.LinearLayout.LayoutParams(size, size));
-            controlsButton.setVisibility(View.VISIBLE);
-        }
-        if (leftGroup && night != null && more != null) {
-            // left aligned, vertically centred with the playback buttons: more, then night mode
-            android.widget.LinearLayout left = new android.widget.LinearLayout(mContext);
-            left.setOrientation(android.widget.LinearLayout.HORIZONTAL);
-            left.setGravity(Gravity.CENTER_VERTICAL);
-            left.addView(more);
-            left.addView(night);
-            alignLeftButtonsWithElapsedTime(v, left, more);
-            RelativeLayout.LayoutParams leftParams = new RelativeLayout.LayoutParams(
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                    mContext.getResources().getDimensionPixelSize(R.dimen.mobile_controls_buttons_height));
-            leftParams.addRule(RelativeLayout.ALIGN_PARENT_START);
-            leftParams.addRule(RelativeLayout.CENTER_VERTICAL);
-            ((RelativeLayout) v.findViewById(R.id.button_bar)).addView(left, leftParams);
-        }
-        // audio channels stay reachable from the audio popup; keep the views for the existing bindings
-        if (channels != null) { channels.setVisibility(View.GONE); row.addView(channels); }
-        if (close != null) row.addView(close);
-        return true;
-    }
-
-    /**
-     * Shifts the left button group so the visible edge of the "more" dots lines up with the left edge
-     * of the elapsed time text above it (the icon sits inside the button's 10dp padding).
-     */
-    private void alignLeftButtonsWithElapsedTime(View root, View group, View more) {
-        View timeView = root.findViewById(R.id.time_current);
-        if (!(timeView instanceof TextView)) return;
-        TextView time = (TextView) timeView;
-        final float iconInset = swipeDp(20);   // 10dp padding + dots start 10dp into the 24dp icon
-        View.OnLayoutChangeListener listener = (view, l, t, r, b, ol, ot, or, ob) -> {
-            CharSequence text = time.getText();
-            if (text == null || text.length() == 0 || time.getWidth() == 0 || group.getWidth() == 0) return;
-            float textWidth = time.getPaint().measureText(text.toString());
-            int[] timePos = new int[2];
-            int[] groupPos = new int[2];
-            time.getLocationInWindow(timePos);
-            group.getLocationInWindow(groupPos);
-            float textLeft = timePos[0] + time.getWidth() - time.getPaddingRight() - textWidth;
-            float iconLeft = groupPos[0] - group.getTranslationX() + more.getLeft() + iconInset;
-            float shift = textLeft - iconLeft;
-            if (Math.abs(shift - group.getTranslationX()) > 0.5f) group.setTranslationX(shift);
-        };
-        time.addOnLayoutChangeListener(listener);
-        group.addOnLayoutChangeListener(listener);
     }
 
     /** Compact UI: wires the buttons that now sit directly in the playback row (no pill any more). */
@@ -1342,8 +1063,7 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
 
     private boolean swipePillEnabled() {
         if (mMiniUi) return true;   // compact UI: the buttons pill is always available (swipe up / D-pad UP)
-        return !mYoutubePhoneControls && !mPlainButtonRow
-                && PreferenceManager.getDefaultSharedPreferences(mContext).getBoolean(PREF_SWIPE_PILL, false);
+        return false;
     }
 
     private int swipeDp(float value) {
@@ -1763,12 +1483,10 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
 
     private void initControllerView(View v, boolean isMainView) {
         configureCompactPhoneControls(v);
-        configureYoutubePhoneControls(v);
         configureMiniPhoneControls(v);
         configureStandardTitle(v);
-        mPlainButtonRow = applyPlainButtonRow(v) || mMiniUi;
+        mPlainButtonRow = mMiniUi;
         bindPhoneControlsPill(v);
-        bindYoutubePhoneControls(v);
         if (isMainView && (isTVMode || TVUtils.isTV(mContext))) setupTvSwipePill(v);
         // next TV menu
 
@@ -2213,13 +1931,15 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
             int paddingTop = mContext.getResources().getDimensionPixelSize(R.dimen.mobile_controls_padding_top);
             int bottomPaddingRes = isCompactPhoneControls()
                     ? R.dimen.mobile_compact_controls_padding_bottom
-                    : mYoutubePhoneControls
-                    ? R.dimen.mobile_ytui_controls_padding_bottom
                     : R.dimen.mobile_controls_padding_bottom;
             int paddingBottom = mContext.getResources().getDimensionPixelSize(bottomPaddingRes) + bottom;
-            if (mControlBar.getPaddingLeft() != left || mControlBar.getPaddingRight() != right
+            // compact UI: extra room at the left and right of the whole control area
+            final int sidePadding = mMiniUi ? swipeDp(16) : 0;
+            final int paddingLeft = left + sidePadding;
+            final int paddingRight = right + sidePadding;
+            if (mControlBar.getPaddingLeft() != paddingLeft || mControlBar.getPaddingRight() != paddingRight
                     || mControlBar.getPaddingTop() != paddingTop || mControlBar.getPaddingBottom() != paddingBottom) {
-                mControlBar.setPadding(left, paddingTop, right, paddingBottom);
+                mControlBar.setPadding(paddingLeft, paddingTop, paddingRight, paddingBottom);
             }
         }
         return true;
@@ -2586,12 +2306,7 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
                 }
                 View standardTransport = controller.findViewById(R.id.mobile_transport);
                 if (standardTransport != null) standardTransport.setVisibility(visibility);
-                View centerTransport = controller.findViewById(R.id.mobile_ytui_center_transport);
-                if (centerTransport != null) {
-                    centerTransport.setVisibility(mControlBarShowing && visibility == View.VISIBLE && !mIsLocked
-                            ? View.VISIBLE : View.GONE);
-                }
-                if (!mControlBarShowing && !mSwipePillShowing && !mYoutubeInlinePill && !mPlainButtonRow) {
+                if (!mControlBarShowing && !mSwipePillShowing && !mPlainButtonRow) {
                     controller.findViewById(R.id.mobile_compact_actions).setVisibility(View.GONE);
                     controller.findViewById(R.id.mobile_controls_toggle).setVisibility(View.VISIBLE);
                 }
@@ -2673,7 +2388,7 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
     }
 
     private boolean isCompactPillExpanded() {
-        if (mYoutubeInlinePill || mPlainButtonRow || !mControlBarShowing || mControllerViewLeft == null) return false;
+        if (mPlainButtonRow || !mControlBarShowing || mControllerViewLeft == null) return false;
         View actions = mControllerViewLeft.findViewById(R.id.mobile_compact_actions);
         return actions != null && actions.getVisibility() == View.VISIBLE;
     }
@@ -4001,7 +3716,7 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
     private boolean standardTapZonesEnabled() {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
         String style = getPhonePlayerStyle(prefs);
-        return (PHONE_STYLE_STANDARD.equals(style) || PHONE_STYLE_MINI.equals(style))
+        return PHONE_STYLE_MINI.equals(style)
                 && prefs.getBoolean(PREF_STANDARD_TAP_ZONES, true);
     }
 
@@ -4071,7 +3786,6 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
             return phoneHit(mControllerViewLeft.findViewById(R.id.mobile_compact_pill), event);
         }
         return phoneHit(mControlBar, event) || phoneHit(mControlBar2, event)
-                || phoneHit(mControllerViewLeft.findViewById(R.id.mobile_ytui_center_transport), event)
                 || (isCompactPhoneControls() && phoneHit(
                         mControllerViewLeft.findViewById(R.id.mobile_compact_transport), event));
     }
@@ -4615,7 +4329,7 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
     }
 
     boolean handlePillHorizontalKey(KeyEvent event) {
-        if (mYoutubeInlinePill || (mPlainButtonRow && !mSwipePillShowing)) return false;     // plain focus navigation
+        if (mPlainButtonRow && !mSwipePillShowing) return false;     // plain focus navigation
         int key = event.getKeyCode();
         if (key != KeyEvent.KEYCODE_DPAD_LEFT && key != KeyEvent.KEYCODE_DPAD_RIGHT) return false;
         if (mPhoneTrackPopupOpen || isTVMenuDisplayed) return false;
@@ -4733,7 +4447,7 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
     }
 
     boolean handlePhonePillRemoteKey(KeyEvent event) {
-        if (mYoutubeInlinePill || mPlainButtonRow) return false;     // the pill is always open: plain focus navigation
+        if (mPlainButtonRow) return false;     // the pill is always open: plain focus navigation
         if (mControllerViewLeft == null || mIsStopped || mIsLocked || isTVMenuDisplayed
                 || mPhoneTrackPopupOpen || TVUtils.isTV(mContext)) return false;
         View pill = mControllerViewLeft.findViewById(R.id.mobile_compact_pill);

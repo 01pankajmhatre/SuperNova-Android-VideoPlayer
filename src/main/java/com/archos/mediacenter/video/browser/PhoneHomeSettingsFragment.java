@@ -64,8 +64,6 @@ public class PhoneHomeSettingsFragment extends PreferenceFragmentCompat {
         PreferenceCategory appearance = addCategory(screen, R.string.phone_settings_appearance);
         addAction(appearance, R.string.home_background_theme, activity == null ? null : () -> activity.showHomeColorPicker(false));
         addAction(appearance, R.string.home_card_color, activity == null ? null : () -> activity.showHomeColorPicker(true));
-        addAction(appearance, R.string.phone_poster_shape, activity == null ? null : activity::showHomePosterShapePicker);
-        addAction(appearance, R.string.phone_movie_title_position, activity == null ? null : activity::showHomeMovieTitlePicker);
         addAction(appearance, R.string.phone_details_style, activity == null ? null : activity::showDetailsStylePicker);
 
         SwitchPreferenceCompat pin = new SwitchPreferenceCompat(requireContext());
@@ -89,65 +87,17 @@ public class PhoneHomeSettingsFragment extends PreferenceFragmentCompat {
         appearance.addPreference(posterPage);
         addAction(appearance, R.string.phone_home_rows, activity == null ? null : activity::showHomeRowsPicker);
 
-        SwitchPreferenceCompat netSources = new SwitchPreferenceCompat(requireContext());
-        netSources.setKey(BrowserCategory.SHOW_NETWORK_SOURCES_IN_ROW);
-        netSources.setTitle(R.string.phone_home_network_sources);
-        netSources.setSummaryOn(R.string.phone_home_network_sources_on);
-        netSources.setSummaryOff(R.string.phone_home_network_sources_off);
-        netSources.setDefaultValue(false);
-        netSources.setOnPreferenceClickListener(preference -> {
-            if (activity != null) activity.updateHomeNetworkSources();
-            return true;
-        });
-        appearance.addPreference(netSources);
-
         PreferenceCategory playback = addCategory(screen, R.string.phone_settings_playback);
         if (PlaybackNotificationSettings.isSupported(requireActivity())) {
             addAction(playback, R.string.notification_mode, () -> PlaybackNotificationSettings.show(requireActivity()));
         }
-        // Playback UI style: standard / compact / YouTube style (replaces the old compact on/off switch).
-        ListPreference playerStyle = new ListPreference(requireContext());
-        playerStyle.setKey(PlayerController.PREF_PHONE_PLAYER_STYLE);
-        playerStyle.setTitle(R.string.phone_player_style);
-        playerStyle.setEntries(new CharSequence[]{
-                getText(R.string.phone_player_style_standard),
-                getText(R.string.phone_player_style_compact),
-                getText(R.string.phone_player_style_youtube)});
-        playerStyle.setEntryValues(new String[]{
-                PlayerController.PHONE_STYLE_STANDARD,
-                PlayerController.PHONE_STYLE_MINI,
-                PlayerController.PHONE_STYLE_YOUTUBE});
-        // keep what the former compact switch was set to until a style is picked
-        playerStyle.setDefaultValue(PlayerController.getPhonePlayerStyle(getPreferenceManager().getSharedPreferences()));
-        playerStyle.setSummaryProvider(ListPreference.SimpleSummaryProvider.getInstance());
-        playback.addPreference(playerStyle);
-        Preference[] standardOptions = addStandardOptions(playback);
-
-        // YouTube style options
-        SwitchPreferenceCompat ytCenter = new SwitchPreferenceCompat(requireContext());
-        ytCenter.setKey(PlayerController.PREF_YTUI_CENTER_BUTTONS);
-        ytCenter.setTitle(R.string.phone_ytui_center_buttons);
-        ytCenter.setSummary(R.string.phone_ytui_center_buttons_summary);
-        ytCenter.setDefaultValue(false);
-        playback.addPreference(ytCenter);
-
-        androidx.preference.SeekBarPreference ytOpacity = new androidx.preference.SeekBarPreference(requireContext());
-        ytOpacity.setKey(PlayerController.PREF_YTUI_PILL_OPACITY);
-        ytOpacity.setTitle(R.string.phone_ytui_pill_opacity);
-        ytOpacity.setSummary(R.string.phone_ytui_pill_opacity_summary);
-        ytOpacity.setMin(0);
-        ytOpacity.setMax(100);
-        ytOpacity.setSeekBarIncrement(5);
-        ytOpacity.setShowSeekBarValue(true);
-        ytOpacity.setDefaultValue(PlayerController.DEFAULT_YTUI_PILL_OPACITY);
-        playback.addPreference(ytOpacity);
-
+        // Seek bar color (Compact playback UI)
         ListPreference ytSeekColor = new ListPreference(requireContext());
         ytSeekColor.setKey(PlayerController.PREF_YTUI_SEEK_COLOR);
         ytSeekColor.setTitle(R.string.phone_ytui_seek_color);
         ytSeekColor.setEntries(R.array.phone_ytui_seek_color_entries);
         ytSeekColor.setEntryValues(R.array.phone_ytui_seek_color_values);
-        ytSeekColor.setDefaultValue(PlayerController.DEFAULT_YTUI_SEEK_COLOR);
+        ytSeekColor.setDefaultValue("#2B2BE0");
         ytSeekColor.setSummaryProvider(ListPreference.SimpleSummaryProvider.getInstance());
         playback.addPreference(ytSeekColor);
 
@@ -164,23 +114,8 @@ public class PhoneHomeSettingsFragment extends PreferenceFragmentCompat {
         doubleTap.setSummary(R.string.phone_standard_tap_zones_summary);
         doubleTap.setDefaultValue(true);
         playback.addPreference(doubleTap);
-        // Show the Standard settings only when that style is selected.
-        updateStyleOptions(playerStyle.getValue(), standardOptions, ytCenter, ytOpacity, ytSeekColor);
         final androidx.preference.CheckBoxPreference hideExtraButtons =
                 new androidx.preference.CheckBoxPreference(requireContext());
-        playerStyle.setOnPreferenceChangeListener((preference, value) -> {
-            updateStyleOptions(value, standardOptions, ytCenter, ytOpacity, ytSeekColor);
-            hideExtraButtons.setEnabled(PlayerController.PHONE_STYLE_MINI.equals(value)
-                    || getPreferenceManager().getSharedPreferences().getBoolean(PlayerController.PREF_SWIPE_PILL, false));
-            return true;
-        });
-
-        SwitchPreferenceCompat swipePill = new SwitchPreferenceCompat(requireContext());
-        swipePill.setKey(PlayerController.PREF_SWIPE_PILL);
-        swipePill.setTitle(R.string.phone_swipe_pill);
-        swipePill.setSummary(R.string.phone_swipe_pill_summary);
-        swipePill.setDefaultValue(false);
-        playback.addPreference(swipePill);
 
         // the buttons pill (swipe up / UP on the remote) has the other buttons: the control area can keep only playback
         hideExtraButtons.setKey(PlayerController.PREF_HIDE_EXTRA_BUTTONS);
@@ -188,14 +123,6 @@ public class PhoneHomeSettingsFragment extends PreferenceFragmentCompat {
         hideExtraButtons.setSummary(R.string.phone_hide_extra_buttons_summary);
         hideExtraButtons.setDefaultValue(false);
         playback.addPreference(hideExtraButtons);
-        hideExtraButtons.setEnabled(getPreferenceManager().getSharedPreferences()
-                .getBoolean(PlayerController.PREF_SWIPE_PILL, false)
-                || PlayerController.PHONE_STYLE_MINI.equals(playerStyle.getValue()));
-        swipePill.setOnPreferenceChangeListener((preference, value) -> {
-            hideExtraButtons.setEnabled(Boolean.TRUE.equals(value)
-                    || PlayerController.PHONE_STYLE_MINI.equals(playerStyle.getValue()));
-            return true;
-        });
 
         addAction(playback, R.string.phone_poster_tap, activity == null ? null : activity::showPosterTapPicker);
 
@@ -243,79 +170,6 @@ public class PhoneHomeSettingsFragment extends PreferenceFragmentCompat {
     public void onResume() {
         super.onResume();
         AppUpdater.onResume(requireActivity());   // back from the installer: delete the downloaded APK
-    }
-
-    private Preference[] addStandardOptions(PreferenceCategory playback) {
-        ListPreference position = new ListPreference(requireContext());
-        position.setKey(PlayerController.PREF_STANDARD_TITLE_POSITION);
-        position.setTitle(R.string.phone_standard_title_position);
-        position.setEntries(new CharSequence[]{
-                getText(R.string.phone_standard_title_above_seekbar),
-                getText(R.string.phone_standard_title_button_row),
-                getText(R.string.phone_standard_title_top),
-                getText(R.string.phone_standard_title_below)});
-        position.setEntryValues(new String[]{
-                PlayerController.STANDARD_TITLE_ABOVE_SEEKBAR,
-                PlayerController.STANDARD_TITLE_BUTTON_ROW,
-                PlayerController.STANDARD_TITLE_TOP,
-                PlayerController.STANDARD_TITLE_BELOW});
-        position.setDefaultValue(PlayerController.STANDARD_TITLE_ABOVE_SEEKBAR);
-        position.setSummaryProvider(ListPreference.SimpleSummaryProvider.getInstance());
-        playback.addPreference(position);
-
-        SwitchPreferenceCompat outline = new SwitchPreferenceCompat(requireContext());
-        outline.setKey(PlayerController.PREF_STANDARD_TITLE_OUTLINE);
-        outline.setTitle(R.string.phone_standard_title_outline);
-        outline.setDefaultValue(false);
-        playback.addPreference(outline);
-
-        SwitchPreferenceCompat shadow = new SwitchPreferenceCompat(requireContext());
-        shadow.setKey(PlayerController.PREF_STANDARD_TITLE_SHADOW);
-        shadow.setTitle(R.string.phone_standard_title_shadow);
-        shadow.setSummary(R.string.phone_standard_playback_shadow_summary);
-        shadow.setDefaultValue(false);
-        playback.addPreference(shadow);
-
-        SeekBarPreference size = new SeekBarPreference(requireContext());
-        size.setKey(PlayerController.PREF_STANDARD_TITLE_SIZE);
-        size.setTitle(R.string.phone_standard_title_size);
-        size.setMin(PlayerController.MIN_STANDARD_TITLE_SIZE);
-        size.setMax(PlayerController.MAX_STANDARD_TITLE_SIZE);
-        size.setDefaultValue(PlayerController.DEFAULT_STANDARD_TITLE_SIZE);
-        size.setShowSeekBarValue(true);
-        playback.addPreference(size);
-
-        SwitchPreferenceCompat status = new SwitchPreferenceCompat(requireContext());
-        status.setKey(PlayerController.PREF_STANDARD_TITLE_STATUS);
-        status.setTitle(R.string.phone_standard_title_status);
-        status.setDefaultValue(false);
-        playback.addPreference(status);
-
-        SwitchPreferenceCompat background = new SwitchPreferenceCompat(requireContext());
-        background.setKey(PlayerController.PREF_STANDARD_TITLE_BACKGROUND);
-        background.setTitle(R.string.phone_standard_title_background);
-        background.setDefaultValue(false);
-        playback.addPreference(background);
-
-        SwitchPreferenceCompat noPill = new SwitchPreferenceCompat(requireContext());
-        noPill.setKey(PlayerController.PREF_STANDARD_NO_BUTTON_PILL);
-        noPill.setTitle(R.string.phone_standard_no_button_pill);
-        noPill.setSummary(R.string.phone_standard_no_button_pill_summary);
-        noPill.setDefaultValue(false);
-        playback.addPreference(noPill);
-
-        return new Preference[]{position, outline, shadow, size, status, background, noPill};
-    }
-
-    private static void updateStyleOptions(Object style, Preference[] standardOptions,
-                                           Preference ytCenter,
-                                           Preference ytOpacity, Preference ytSeekColor) {
-        boolean standard = PlayerController.PHONE_STYLE_STANDARD.equals(style);
-        for (Preference option : standardOptions) option.setVisible(standard);
-        boolean youtube = PlayerController.PHONE_STYLE_YOUTUBE.equals(style);
-        ytCenter.setEnabled(youtube);
-        ytOpacity.setEnabled(youtube);
-        ytSeekColor.setEnabled(youtube || PlayerController.PHONE_STYLE_MINI.equals(style));
     }
 
     private void addSkipDuration(PreferenceCategory category, String key, int title) {

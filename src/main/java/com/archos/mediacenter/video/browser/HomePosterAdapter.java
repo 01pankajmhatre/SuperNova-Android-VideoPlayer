@@ -20,8 +20,6 @@ import java.util.List;
 /** Poster cards of the phone home page rows (Recently Played, Movies, Series). */
 public class HomePosterAdapter extends RecyclerView.Adapter<HomePosterAdapter.VH> {
     public static final String POSTER_RESUME = "classic_home_poster_resume";
-    public static final String MOVIE_TITLE_INSIDE = "classic_home_movie_title_inside";
-    public static final String SQUARE_POSTERS = "classic_home_square_posters";
 
     public static class Poster {
         public final String title;
@@ -116,8 +114,7 @@ public class HomePosterAdapter extends RecyclerView.Adapter<HomePosterAdapter.VH
     @Override
     public void onBindViewHolder(@NonNull VH h, int position) {
         final Poster p = mItems.get(position);
-        boolean square = androidx.preference.PreferenceManager.getDefaultSharedPreferences(h.itemView.getContext())
-                .getBoolean(SQUARE_POSTERS, false);
+        final boolean square = false;                 // posters stay portrait
         View artwork = (View) h.image.getParent();
         ViewGroup.LayoutParams artworkParams = artwork.getLayoutParams();
         artworkParams.height = Math.round((square ? 84 : 124) * mScale * h.itemView.getResources().getDisplayMetrics().density);
@@ -134,8 +131,7 @@ public class HomePosterAdapter extends RecyclerView.Adapter<HomePosterAdapter.VH
                 .getInt(BrowserCategory.HOME_CARD_COLOR, 0xFF1F2B44);
         h.itemView.setBackgroundColor(android.graphics.Color.TRANSPARENT);
         ((View) h.image.getParent()).setBackgroundColor(color);
-        final boolean titleInside = androidx.preference.PreferenceManager.getDefaultSharedPreferences(h.itemView.getContext())
-                .getBoolean(MOVIE_TITLE_INSIDE, false);
+        final boolean titleInside = false;            // the title stays below the poster
         h.overlayTitle.setText(p.title);
         h.overlayTitle.setVisibility(titleInside ? View.VISIBLE : View.GONE);
         h.name.setVisibility(titleInside ? View.GONE : View.VISIBLE);

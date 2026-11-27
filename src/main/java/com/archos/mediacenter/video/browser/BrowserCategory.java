@@ -154,7 +154,6 @@ abstract public class BrowserCategory extends ListFragment {
     private final ArrayList<ItemData> mNetworkRowItems = new ArrayList<>();
     /** Cards of the Home "Sources" row: DLNA Now, Movies, TV Shows, All videos, Recently played, Recently added, Network, then the storages and network sources. */
     private final ArrayList<ItemData> mHomeSourceCards = new ArrayList<>();
-    public static final String SHOW_NETWORK_SOURCES_IN_ROW = "classic_home_show_network_sources";
     private static final String HIDDEN_HOME_SOURCES = "classic_home_hidden_sources";
     protected static final int ITEM_ID_HOME_NETWORK = 100;
     // Files page: the "Network Sources" heading and the fixed network entries below it
@@ -571,11 +570,6 @@ abstract public class BrowserCategory extends ListFragment {
         }
     }
 
-    /** Settings: the row follows the "network sources in Select Source" switch. */
-    public void applyNetworkSourcesSetting() {
-        refreshHomeTilesNow();
-    }
-
     private void refreshHomeTilesNow() {
         if (mNetworkSourcesListener != null) mNetworkSourcesListener.run();
         rebuildHomeTiles();
@@ -929,11 +923,9 @@ abstract public class BrowserCategory extends ListFragment {
         mAvailableHomeTiles.clear();
         mAvailableHomeTiles.addAll(mHomeTiles);
         // Discovered sources (SMB computers, media servers, our DLNA host) live on the Network page,
-        // under "Available sources"; Settings can also put them in this row.
-        if (!mPreferences.getBoolean(SHOW_NETWORK_SOURCES_IN_ROW, false)) {
-            mHomeTiles.removeIf(item -> item.id == ITEM_ID_NET_SMB || item.id == ITEM_ID_NET_UPNP
-                    || item.id == ITEM_ID_NET_LOCAL_DLNA);
-        }
+        // under "Available sources", not in this row.
+        mHomeTiles.removeIf(item -> item.id == ITEM_ID_NET_SMB || item.id == ITEM_ID_NET_UPNP
+                || item.id == ITEM_ID_NET_LOCAL_DLNA);
         java.util.Set<String> hidden = mPreferences.getStringSet(HIDDEN_HOME_SOURCES, java.util.Collections.emptySet());
         mHomeTiles.removeIf(item -> hidden.contains(sourceKey(item)));
         // Recently played / added, Movies and TV shows are home rows; Settings can also add them as cards here.

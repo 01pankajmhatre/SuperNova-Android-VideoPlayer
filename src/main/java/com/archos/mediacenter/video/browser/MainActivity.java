@@ -1008,12 +1008,6 @@ public class MainActivity extends BrowserActivity implements ExternalPlayerWithR
         if (category instanceof BrowserCategory) ((BrowserCategory) category).showHomeRowsPicker();
     }
 
-    /** Settings: network sources shown (or not) in the Select Source row. */
-    void updateHomeNetworkSources() {
-        Fragment category = getSupportFragmentManager().findFragmentById(R.id.category);
-        if (category instanceof BrowserCategory) ((BrowserCategory) category).applyNetworkSourcesSetting();
-    }
-
     /** Settings: the Home movies and TV shows grid switched on or off. */
     void updateHomeGrid() {
         Fragment category = getSupportFragmentManager().findFragmentById(R.id.category);
@@ -1027,24 +1021,17 @@ public class MainActivity extends BrowserActivity implements ExternalPlayerWithR
         }
     }
 
-    /** Settings > Movie details page: standard phone page, or a separate page that looks like the TV UI details page. */
+    /** Settings > Movie details page: the standard phone page, or the real TV details page (TV layout). */
     void showDetailsStylePicker() {
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
         new androidx.appcompat.app.AlertDialog.Builder(this)
                 .setTitle(R.string.phone_details_style)
                 .setSingleChoiceItems(new CharSequence[]{getString(R.string.phone_details_style_standard),
-                        getString(R.string.phone_details_style_tv), getString(R.string.phone_details_style_alternate),
-                        getString(R.string.phone_details_style_tvlayout), getString(R.string.phone_details_style_hero)},
-                        com.archos.mediacenter.video.info.VideoInfoActivity.isHeroEnabled(this) ? 4
-                                : com.archos.mediacenter.video.info.VideoInfoActivity.isTvLayoutEnabled(this) ? 3
-                                : com.archos.mediacenter.video.info.PhoneAlternateDetailsActivity.isEnabled(this) ? 2
-                                : com.archos.mediacenter.video.info.PhoneTvDetailsActivity.isEnabled(this) ? 1 : 0,
+                        getString(R.string.phone_details_style_tvlayout)},
+                        com.archos.mediacenter.video.info.VideoInfoActivity.isTvLayoutEnabled(this) ? 1 : 0,
                         (dialog, which) -> {
                             preferences.edit()
-                                    .putBoolean(com.archos.mediacenter.video.info.PhoneTvDetailsActivity.PREF_TV_STYLE_DETAILS, which == 1)
-                                    .putBoolean(com.archos.mediacenter.video.info.PhoneAlternateDetailsActivity.PREF_ALTERNATE_DETAILS, which == 2)
-                                    .putBoolean(com.archos.mediacenter.video.info.VideoInfoActivity.PREF_TV_LAYOUT_DETAILS, which == 3)
-                                    .putBoolean(com.archos.mediacenter.video.info.VideoInfoActivity.PREF_HERO_DETAILS, which == 4)
+                                    .putBoolean(com.archos.mediacenter.video.info.VideoInfoActivity.PREF_TV_LAYOUT_DETAILS, which == 1)
                                     .apply();
                             dialog.dismiss();
                         })
@@ -1061,40 +1048,6 @@ public class MainActivity extends BrowserActivity implements ExternalPlayerWithR
                         preferences.getBoolean(HomePosterAdapter.POSTER_RESUME, false) ? 1 : 0,
                         (dialog, which) -> {
                             preferences.edit().putBoolean(HomePosterAdapter.POSTER_RESUME, which == 1).apply();
-                            dialog.dismiss();
-                        })
-                .setNegativeButton(android.R.string.cancel, null)
-                .show();
-    }
-
-    void showHomeMovieTitlePicker() {
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-        new androidx.appcompat.app.AlertDialog.Builder(this)
-                .setTitle(R.string.phone_movie_title_position)
-                .setSingleChoiceItems(new CharSequence[]{getString(R.string.phone_title_below),
-                        getString(R.string.phone_title_inside)},
-                        preferences.getBoolean(HomePosterAdapter.MOVIE_TITLE_INSIDE, false) ? 1 : 0,
-                        (dialog, which) -> {
-                            preferences.edit().putBoolean(HomePosterAdapter.MOVIE_TITLE_INSIDE, which == 1).apply();
-                            Fragment category = getSupportFragmentManager().findFragmentById(R.id.category);
-                            if (category instanceof BrowserCategory) ((BrowserCategory) category).refreshSourceCardColors();
-                            dialog.dismiss();
-                        })
-                .setNegativeButton(android.R.string.cancel, null)
-                .show();
-    }
-
-    void showHomePosterShapePicker() {
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-        new androidx.appcompat.app.AlertDialog.Builder(this)
-                .setTitle(R.string.phone_poster_shape)
-                .setSingleChoiceItems(new CharSequence[]{getString(R.string.phone_poster_portrait),
-                        getString(R.string.phone_poster_square)},
-                        preferences.getBoolean(HomePosterAdapter.SQUARE_POSTERS, false) ? 1 : 0,
-                        (dialog, which) -> {
-                            preferences.edit().putBoolean(HomePosterAdapter.SQUARE_POSTERS, which == 1).apply();
-                            Fragment category = getSupportFragmentManager().findFragmentById(R.id.category);
-                            if (category instanceof BrowserCategory) ((BrowserCategory) category).refreshSourceCardColors();
                             dialog.dismiss();
                         })
                 .setNegativeButton(android.R.string.cancel, null)

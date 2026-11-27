@@ -48,20 +48,6 @@
             android:layout_height="20dp"
             android:layout_marginEnd="8dp"
             android:visibility="gone" />
-        <!-- "elapsed / total"; tap toggles total <-> remaining -->
-        <TextView
-            android:id="@+id/time_current"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:fontFeatureSettings="tnum"
-            android:layout_gravity="bottom"
-            android:gravity="end|bottom"
-            android:includeFontPadding="false"
-            android:shadowColor="#99000000"
-            android:shadowRadius="3"
-            android:singleLine="true"
-            android:textColor="#FFFFFF"
-            android:textSize="12sp" />
     </LinearLayout>
 
     <LinearLayout
@@ -72,6 +58,20 @@
         android:layout_marginEnd="@dimen/mobile_controls_title_track_margin"
         android:gravity="center_vertical"
         android:orientation="horizontal">
+        <!-- elapsed time, left of the bar, vertically centred with the bar -->
+        <TextView
+            android:id="@+id/time_current"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="10dp"
+            android:fontFeatureSettings="tnum"
+            android:gravity="center_vertical|end"
+            android:includeFontPadding="false"
+            android:shadowColor="#99000000"
+            android:shadowRadius="3"
+            android:singleLine="true"
+            android:textColor="#FFFFFF"
+            android:textSize="12sp" />
         <com.archos.mediacenter.video.player.TimeLabelSeekBar
             android:id="@+id/seek_progress"
             style="@style/PlayerSliderHorizontal"
@@ -82,13 +82,27 @@
             android:minHeight="4dp"
             android:paddingStart="0dp"
             android:paddingEnd="0dp"
-            android:paddingTop="20dp"
+            android:paddingTop="0dp"
             android:paddingBottom="0dp"
             android:progressDrawable="@drawable/mobile_mini_seek_progress"
             android:thumb="@drawable/mobile_mini_seek_thumb"
             android:thumbOffset="0dp"
             android:splitTrack="false"
             android:contentDescription="@string/mobile_player_seek" />
+        <!-- total / remaining time, right of the bar; tap toggles total <-> remaining -->
+        <TextView
+            android:id="@+id/time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:fontFeatureSettings="tnum"
+            android:gravity="center_vertical|start"
+            android:includeFontPadding="false"
+            android:shadowColor="#99000000"
+            android:shadowRadius="3"
+            android:singleLine="true"
+            android:textColor="#FFFFFF"
+            android:textSize="12sp" />
     </LinearLayout>
 
     <RelativeLayout

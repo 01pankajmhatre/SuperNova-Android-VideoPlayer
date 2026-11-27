@@ -356,7 +356,6 @@ public class VideoInfoActivityFragment extends Fragment implements LoaderManager
     private int mHeaderHeight;
     private boolean mIsPortraitMode;
     private boolean mPhoneMovieDetails;
-    private boolean mHero;   // 5th details page: hero poster + action buttons + all details (no links / trailers)
 
     private static boolean isFileManagerServiceBound = false;
 
@@ -403,58 +402,6 @@ public class VideoInfoActivityFragment extends Fragment implements LoaderManager
         mColor = ThemeManager.getInstance(getActivity()).getDetailsPrimaryColor();
     }
 
-    /** Hero page: fill the Posters / Backdrops rows (same data as the TV page rows). */
-    private void loadHeroImages(final BaseTags tags) {
-        if (tags == null || mRoot == null) return;
-        final Context ctx = getContext();
-        final LinearLayout posters = mRoot.findViewById(R.id.hero_posters_row);
-        final LinearLayout backdrops = mRoot.findViewById(R.id.hero_backdrops_row);
-        if (ctx == null || posters == null || backdrops == null) return;
-        final ExecutorService ex = Executors.newSingleThreadExecutor();
-        ex.execute(() -> {
-            java.util.List<ScraperImage> p = null;
-            java.util.List<ScraperImage> b = null;
-            try {
-                p = tags.getAllPostersInDb(ctx);
-                b = tags.getAllBackdropsInDb(ctx);
-            } catch (Exception e) {
-                log.warn("loadHeroImages: ", e);
-            } finally {
-                ex.shutdown();
-            }
-            final java.util.List<ScraperImage> fp = p;
-            final java.util.List<ScraperImage> fb = b;
-            if (getActivity() == null) return;
-            getActivity().runOnUiThread(() -> {
-                if (!isAdded() || mRoot == null) return;
-                fillHeroRow(posters, mRoot.findViewById(R.id.hero_posters_container), fp, 110, 165);
-                fillHeroRow(backdrops, mRoot.findViewById(R.id.hero_backdrops_container), fb, 230, 130);
-            });
-        });
-    }
-
-    private void fillHeroRow(LinearLayout row, View container, java.util.List<ScraperImage> images, int wDp, int hDp) {
-        row.removeAllViews();
-        if (images == null || images.isEmpty() || container == null) {
-            if (container != null) container.setVisibility(View.GONE);
-            return;
-        }
-        final float d = getResources().getDisplayMetrics().density;
-        for (ScraperImage img : images) {
-            String url = img.getThumbUrl() != null ? img.getThumbUrl() : img.getLargeUrl();
-            if (url == null) continue;
-            ImageView iv = new ImageView(row.getContext());
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams((int) (wDp * d), (int) (hDp * d));
-            lp.setMarginEnd((int) (8 * d));
-            iv.setLayoutParams(lp);
-            iv.setScaleType(ImageView.ScaleType.CENTER_CROP);
-            iv.setContentDescription(null);
-            Picasso.get().load(url).into(iv);
-            row.addView(iv);
-        }
-        container.setVisibility(row.getChildCount() > 0 ? View.VISIBLE : View.GONE);
-    }
-
     private static void squareCards(View v) {
         if (v instanceof androidx.cardview.widget.CardView) ((androidx.cardview.widget.CardView) v).setRadius(0f);
         if (v instanceof ViewGroup) {
@@ -471,9 +418,7 @@ public class VideoInfoActivityFragment extends Fragment implements LoaderManager
         mPhoneMovieDetails = requireActivity().getIntent().getBooleanExtra(
                 VideoInfoActivity.EXTRA_PHONE_MOVIE_DETAILS, false)
                 && ThemeManager.getInstance(requireContext()).isPhoneMode(requireContext());
-        mHero = mPhoneMovieDetails && requireActivity().getIntent().getBooleanExtra(VideoInfoActivity.EXTRA_HERO_LAYOUT, false);
-        mRoot = inflater.inflate(mHero ? R.layout.phone_hero_details_fragment
-                : mPhoneMovieDetails ? R.layout.phone_movie_details_fragment
+        mRoot = inflater.inflate(mPhoneMovieDetails ? R.layout.phone_movie_details_fragment
                 : R.layout.video_info2_fragment, container, false);
         if (requireActivity().getIntent().getBooleanExtra(VideoInfoActivity.EXTRA_TV_LAYOUT, false)) {
             // TV layout on the phone: square cards (some cards are added a little later, so repeat)
@@ -895,7 +840,7 @@ public class VideoInfoActivityFragment extends Fragment implements LoaderManager
         ((CardView) mScrapDetailsCard).setCardBackgroundColor(mColor);
         ((CardView)mPosterImageView.getParent().getParent()).setCardBackgroundColor(mColor);
         mScraperPlotContainer.setCardBackgroundColor(mColor);
-        if (!mHero) mActionButtonsContainer.setCardBackgroundColor(mColor);
+        mActionButtonsContainer.setCardBackgroundColor(mColor);
         if(mNavActionButtonsContainer!=null)
             mNavActionButtonsContainer.setCardBackgroundColor(mColor);
         if(mSecondaryTitleBar!=null)
@@ -984,10 +929,10 @@ public class VideoInfoActivityFragment extends Fragment implements LoaderManager
 
             if (mBitmap!= null) {
                 mPosterImageView.setImageBitmap(mBitmap);
-                mPosterImageView.setScaleType(mHero ? ImageView.ScaleType.CENTER_CROP : ImageView.ScaleType.FIT_CENTER);
+                mPosterImageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
             } else {
                 mPosterImageView.setImageDrawable(ContextCompat.getDrawable(getActivity(), R.drawable.filetype_new_video_poster));
-                mPosterImageView.setScaleType(mHero ? ImageView.ScaleType.CENTER_CROP : ImageView.ScaleType.FIT_CENTER);
+                mPosterImageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
 
             }
             setBackground();
@@ -1555,7 +1500,7 @@ public class VideoInfoActivityFragment extends Fragment implements LoaderManager
 
     private void updateHeaderBackground(int scroll, boolean animate) {
         if (mPhoneMovieDetails) {
-            mTitleBar.setBackgroundColor(mHero ? android.graphics.Color.TRANSPARENT : VideoInfoCommonClass.getAlphaColor(mColor, 230));
+            mTitleBar.setBackgroundColor(VideoInfoCommonClass.getAlphaColor(mColor, 230));
             mFABManager.hideFAB(false);
             return;
         }
@@ -1971,10 +1916,10 @@ public class VideoInfoActivityFragment extends Fragment implements LoaderManager
                     if (finalResult.second == mCurrentVideo) {
                         if (finalResult.first != null) {
                             mPosterImageView.setImageBitmap(finalResult.first);
-                            mPosterImageView.setScaleType(mHero ? ImageView.ScaleType.CENTER_CROP : ImageView.ScaleType.FIT_CENTER);
+                            mPosterImageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
                         } else {
                             mPosterImageView.setImageDrawable(ContextCompat.getDrawable(getContext(), R.drawable.filetype_new_video_poster));
-                            mPosterImageView.setScaleType(mHero ? ImageView.ScaleType.CENTER_CROP : ImageView.ScaleType.FIT_CENTER);
+                            mPosterImageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
                         }
                         setBackground();
                         updateSourceList();
@@ -2078,7 +2023,6 @@ public class VideoInfoActivityFragment extends Fragment implements LoaderManager
                         setTextOrHideContainer(mCastTextView, cast, mCastTextView, mCastTextViewTitle);
                         setTextOrHideContainer(mScrapDirector, finalTags.getDirectorsFormatted(), mScrapDirector, mScrapDirectorTitle);
                         setTextOrHideContainer(mScrapWriter, finalTags.getWritersFormatted(), mScrapWriter, mScrapWriterTitle);
-                        if (mHero) loadHeroImages(finalTags);
                         String date = null;
                         if (finalTags instanceof EpisodeTags) {
                             mIsVideoMovie = false;

@@ -1362,13 +1362,6 @@
         <activity
             android:name=".info.VideoInfoActivity"
             android:theme="@style/Theme.TransparentCompat" />
-        <!-- Phone UI page that looks like the TV UI movie details page (Settings > Movie details page) -->
-        <activity
-            android:name=".info.PhoneAlternateDetailsActivity"
-            android:theme="@style/Theme.AppCompat.NoActionBar" />
-        <activity
-            android:name=".info.PhoneTvDetailsActivity"
-            android:theme="@style/Theme.AppCompat.NoActionBar" />
         <activity
             android:name=".info.VideoInfoScraperActivity"
             android:theme="@style/ArchosThemeBlue" />
