@@ -53,7 +53,6 @@ import com.archos.mediacenter.filecoreextension.upnp2.MetaFileFactoryWithUpnp;
 import com.archos.mediacenter.utils.MediaUtils;
 import com.archos.mediacenter.utils.videodb.VideoDbInfo;
 import com.archos.mediacenter.video.R;
-import com.archos.mediacenter.video.browser.TorrentObserverService;
 import com.archos.mediacenter.video.ui.NovaProgressDialog;
 import com.archos.mediaprovider.ArchosMediaIntent;
 import com.archos.mediaprovider.video.VideoStore;
@@ -195,13 +194,11 @@ public class SubtitlesDownloaderActivity2 extends AppCompatActivity {
             mDialog.show();
             applyPlaybackPopupWidth(mDialog);
         }
-        TorrentObserverService.resumed(this);
     }
 
     public void onPause(){
         super.onPause();
         closeDialog();
-        TorrentObserverService.paused(this);
     }
 
     private ArrayList<String> getSubLangValue() {

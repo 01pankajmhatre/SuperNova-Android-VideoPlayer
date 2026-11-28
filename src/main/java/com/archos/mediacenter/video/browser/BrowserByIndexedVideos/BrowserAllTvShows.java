@@ -114,8 +114,21 @@ public class BrowserAllTvShows extends CursorBrowserByVideo {
     @Override
     protected void setViewMode(int mode) {
         // on the phone the page is always the poster grid
-        super.setViewMode(com.archos.mediacenter.video.utils.ThemeManager.getInstance(requireContext())
-                .isPhoneMode(requireContext()) ? VideoUtils.VIEW_MODE_GRID : mode);
+        super.setViewMode(usesPhoneGrid() ? VideoUtils.VIEW_MODE_GRID : mode);
+        if (usesPhoneGrid() && mArchosGridView instanceof android.widget.GridView) {
+            com.archos.mediacenter.video.browser.presenter.PhoneCardStyle.styleGrid(
+                    (android.widget.GridView) mArchosGridView, mRootView);   // Home page background
+        }
+    }
+
+    private boolean usesPhoneGrid() {
+        return getActivity() != null && com.archos.mediacenter.video.utils.ThemeManager.getInstance(requireContext())
+                .isPhoneMode(requireContext());
+    }
+
+    @Override
+    protected boolean usesHomeStyle() {
+        return usesPhoneGrid();
     }
 
     @Override
@@ -322,7 +335,11 @@ public class BrowserAllTvShows extends CursorBrowserByVideo {
 	protected void setupAdapter(boolean createNewAdapter) {
 		if (createNewAdapter || mBrowserAdapter == null) {
 			mBrowserAdapter = new AllTvShowsAdapter(mContext, mCursor);
-			if(mViewMode== VideoUtils.VIEW_MODE_GRID || mViewMode== VideoUtils.VIEW_MODE_GRID_SHORT) {
+			if (usesPhoneGrid()) {
+				((PresenterAdapterByCursor)mBrowserAdapter).setPresenter(Tvshow.class,
+						new com.archos.mediacenter.video.browser.presenter.PhoneTvshowGridPresenter(getActivity(), this));
+			}
+			else if(mViewMode== VideoUtils.VIEW_MODE_GRID || mViewMode== VideoUtils.VIEW_MODE_GRID_SHORT) {
 				((PresenterAdapterByCursor)mBrowserAdapter).setPresenter(Tvshow.class, new TvshowGridPresenter(getActivity(), this));
 			}
 			else if(mViewMode== VideoUtils.VIEW_MODE_GRID_SHORT) {

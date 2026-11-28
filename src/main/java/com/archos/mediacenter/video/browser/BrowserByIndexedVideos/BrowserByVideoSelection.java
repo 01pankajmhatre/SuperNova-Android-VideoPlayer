@@ -51,21 +51,16 @@ public class BrowserByVideoSelection extends CursorBrowserByVideo {
     }
 
     @Override
+    protected boolean usesHomeStyle() {
+        return usesPhoneMovieGrid();
+    }
+
+    @Override
     protected void setViewMode(int mode) {
         super.setViewMode(usesPhoneMovieGrid() ? VideoUtils.VIEW_MODE_GRID : mode);
         if (usesPhoneMovieGrid()) {
-            android.widget.GridView grid = (android.widget.GridView) mArchosGridView;
-            float density = getResources().getDisplayMetrics().density;
-            int columns = Math.max(2, getResources().getConfiguration().screenWidthDp / 180);
-            grid.setNumColumns(columns);
-            grid.setStretchMode(android.widget.GridView.STRETCH_COLUMN_WIDTH);
-            grid.setHorizontalSpacing(Math.round(12 * density));
-            grid.setVerticalSpacing(Math.round(20 * density));
-            grid.setPadding(Math.round(16 * density), Math.round(16 * density),
-                    Math.round(16 * density), Math.round(24 * density));
-            grid.setClipToPadding(false);
-            grid.setSelector(android.R.color.transparent);
-            mRootView.setBackgroundColor(ThemeManager.getInstance(requireContext()).getLeanbackBackgroundColor());
+            com.archos.mediacenter.video.browser.presenter.PhoneCardStyle.styleGrid(
+                    (android.widget.GridView) mArchosGridView, mRootView);   // Home page background
         }
     }
 

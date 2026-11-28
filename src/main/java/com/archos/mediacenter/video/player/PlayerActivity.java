@@ -117,7 +117,6 @@ import com.archos.mediacenter.video.R;
 import com.archos.mediacenter.video.UiChoiceDialog;
 import com.archos.mediacenter.video.browser.MainActivity;
 import com.archos.mediacenter.video.browser.PermissionChecker;
-import com.archos.mediacenter.video.browser.TorrentObserverService;
 import com.archos.mediacenter.video.info.VideoInfoActivity;
 import com.archos.mediacenter.video.info.VideoInfoCommonClass;
 import com.archos.mediacenter.video.leanback.settings.VideoSettingsActivity;
@@ -211,7 +210,6 @@ public class PlayerActivity extends AppCompatActivity implements PlayerControlle
     private static final int DIALOG_WRONG_DEVICE_KINDLE = 7;
 
     private static final int DIALOG_AUDIO_DELAY = 8;
-    private static final int DIALOG_NOT_ENOUGHT_SPACE = 9;
     private static final int DIALOG_AUDIO_SPEED = 10;
 
     // accessed from SubtitleSettingsDialog
@@ -252,12 +250,9 @@ public class PlayerActivity extends AppCompatActivity implements PlayerControlle
     public static final String KEY_ADVANCED_VIDEO_ENABLED = "preferences_advanced_video_enabled";
 
     public static final String INDEXED_URI = "indexed_uri";
-    public static final String KEY_TORRENT="torrent";
     public static final String KEY_STREAMING_URI = "streaming_uri";
     /** Set by every launch coming from this app: a PlayerActivity ACTION_VIEW without it was started by another app. */
     public static final String EXTRA_INTERNAL_LAUNCH = "nova_internal_launch";
-    public static final String KEY_TORRENT_URL = "torrent_url";
-    public static final String KEY_TORRENT_SELECTED_FILE="torrent_seletected_file";
     public static final String LAUNCH_FROM_FLOATING_PLAYER = "launch_from_floating_player";
     public static final String KEY_FORCE_SW = "force_software_decoding";
 
@@ -301,9 +296,6 @@ public class PlayerActivity extends AppCompatActivity implements PlayerControlle
     static final int NOTIFICATION_MODE_NONE = 2;
 
     private static final int MSG_PROGRESS_VISIBLE = 1;
-    private static final int MSG_TORRENT_STARTED = 2;
-    private static final int MSG_TORRENT_UPDATE = 3;
-    private static final int MSG_TORRENT_NOT_ENOUGH_SPACE = 5;
     private static final int MSG_ERROR_UPNP = 4;
     private static final int MSG_SLEEP = 6;
 
@@ -364,34 +356,8 @@ public class PlayerActivity extends AppCompatActivity implements PlayerControlle
                     if (mProgressView != null)
                         mProgressView.setVisibility(View.VISIBLE);
                     break;
-                case MSG_TORRENT_STARTED:
-                    start();
-                    break;
                 case MSG_ERROR_UPNP:
                     myShowDialog(DIALOG_ERROR);
-                    break;
-                case MSG_TORRENT_NOT_ENOUGH_SPACE:
-                    myShowDialog(DIALOG_NOT_ENOUGHT_SPACE);
-                    break;
-                case MSG_TORRENT_UPDATE :
-                    try {
-                        String toParse = (String)msg.obj;
-                        String[] parsed = toParse.split(";");
-                        String toDisplay = parsed[0]+" peers "+
-                                (Long.parseLong(parsed[1])>=0?parsed[1]+" seeds ":"")+
-                                Long.parseLong(parsed[2])/1024+" kB/s "+
-                                Long.parseLong(parsed[4])/1024/1024+"MB/"
-                                +Long.parseLong(parsed[5])/1024/1024+"MB";
-
-                        View torrent_status = mProgressView.findViewById(R.id.torrent_status);
-                        torrent_status.setVisibility(View.VISIBLE);
-                        ((TextView)torrent_status).setText(toDisplay);
-
-                    } catch(NumberFormatException e) {
-						Log.w("AVP", "Display update", e);
-                    } catch(java.lang.ArrayIndexOutOfBoundsException e) {
-                        Log.w("AVP", "Display update, out of bound", e);
-                    }
                     break;
                 case MSG_SLEEP:
                     finishWithResult();
@@ -504,8 +470,6 @@ public class PlayerActivity extends AppCompatActivity implements PlayerControlle
         }
     };
     private boolean isTVMode;
-    private TorrentObserverService mTorrent;
-    private int mTorrentFilePosition = -1;
     private Runnable r = null;
     private int mSavedMode;
     private AlertDialog ad=null;
@@ -1257,6 +1221,13 @@ public class PlayerActivity extends AppCompatActivity implements PlayerControlle
         PlayerBrightnessManager.getInstance().restoreBrightness(this);
         if (mPlayerController != null) mPlayerController.refreshNightMode();   // night mode survives another app
         if (mPlayerController != null) mPlayerController.showTitleInfoPill();
+        if (mReopenPopupOnResume) {   // back from the settings panel: the More popup it was opened from
+            mReopenPopupOnResume = false;
+            final Runnable back = mPopupReopen;
+            if (back != null) getWindow().getDecorView().post(() -> {
+                if (!isFinishing() && !mStopped) back.run();
+            });
+        }
 
         // Safety net for the rare case where Android genuinely killed the process while
         // backgrounded (memory pressure) and a fresh Player/SubtitleEngine had to be created:
@@ -1282,7 +1253,6 @@ public class PlayerActivity extends AppCompatActivity implements PlayerControlle
                     startService(new Intent(this, FloatingPlayerService.class));
                 }
                 mHasAskedFloatingPermission = false;
-                TorrentObserverService.resumed(PlayerActivity.this);
             }
             addNetworkListener();
             if (mPaused) {
@@ -1327,16 +1297,13 @@ public class PlayerActivity extends AppCompatActivity implements PlayerControlle
             if (mPlayer.isPlaying()) {
                 if (!requestVisibleBehind(true)&&!mLaunchFloatingPlayer) {
                     // Try to play behind launcher, but if it fails, so paused.
-                    TorrentObserverService.paused(this);
                     removeNetworkListener();
                 }
             } else {
                 requestVisibleBehind(false);
-                TorrentObserverService.paused(this);
                 removeNetworkListener();
             }
         } else {
-            TorrentObserverService.paused(this);
             removeNetworkListener();
         }
         mPaused = true;
@@ -1357,7 +1324,6 @@ public class PlayerActivity extends AppCompatActivity implements PlayerControlle
     @Override
     public void onVisibleBehindCanceled() {
         mPaused = true;
-        TorrentObserverService.paused(this);
         super.onVisibleBehindCanceled();
     }
 
@@ -1379,9 +1345,6 @@ public class PlayerActivity extends AppCompatActivity implements PlayerControlle
 
         if (mStopped)
             return;
-        if(mTorrent!=null){
-            if (log.isDebugEnabled()) log.debug("onStop, unbinding torrentObserver");
-        }
 
         /*
          * register a receiver that finish activity in case
@@ -1743,13 +1706,21 @@ public class PlayerActivity extends AppCompatActivity implements PlayerControlle
         ensureLaunchGeneration(intent);
         setIntent(intent);
         detectExternalPlayerMode();
-        if(mWasInPictureInPicture) {
+        // a video picked in the player's list strip arrives here while the player is running: play it now
+        final boolean switchVideo = mSwitchVideoFromStrip;
+        mSwitchVideoFromStrip = false;
+        if(mWasInPictureInPicture || switchVideo) {
             if (PlayerService.sPlayerService != null) {
                 PlayerService.sPlayerService.stopAndSaveVideoState();
                 postOnPlayerServiceBind();
             }
         }
     }
+
+    /** Set when a video is picked in the list strip: the intent that follows has to restart the playback. */
+    private volatile boolean mSwitchVideoFromStrip = false;
+    /** A video was picked in the list strip: closing the strip does not bring the buttons pill back. */
+    private boolean mStripPicked;
 
     /** Assign once per command; lifecycle recreation and floating-player handoffs retain it. */
     private static void ensureLaunchGeneration(Intent intent) {
@@ -3108,7 +3079,7 @@ public class PlayerActivity extends AppCompatActivity implements PlayerControlle
         if (mPlayerController.isMiniUi()) {
             // compact UI: top centre, the control area stays visible while the popup is open
             mPlayerController.showWhilePopupOpen();
-            mSubtitleInfoController.showAtTopCentered(findViewById(R.id.audio_popup_anchor), true, subtitleDismissed);
+            mSubtitleInfoController.showAtBottomCentered(popupAnchorAbovePill(), true, subtitleDismissed);
         } else {
             mSubtitleInfoController.showAtBottomEnd(popupAnchorAboveSeekBar(), 12, true, subtitleDismissed);
         }
@@ -3126,15 +3097,39 @@ public class PlayerActivity extends AppCompatActivity implements PlayerControlle
         mPopupGeneration++;
     }
 
+    /** Reopens the button popup that was opened last (More, Audio, Subtitles, Video): BACK in its sub popup comes here. */
+    private Runnable mPopupReopen;
+    private long mPopupDismissedAt;
+    /** Set when the player settings panel is opened from the More popup: that popup comes back with the player. */
+    private boolean mReopenPopupOnResume;
+
+    /** A dialog opened from a button popup: BACK / a tap outside brings that popup back instead of just closing. */
+    private void returnToPopupOnCancel(Dialog dialog) {
+        final Runnable back = mPopupReopen;
+        if (back == null || dialog == null) return;
+        dialog.setOnCancelListener(d -> getWindow().getDecorView().post(() -> {
+            if (!isFinishing() && !mStopped) back.run();
+        }));
+    }
+
     /**
      * A button popup went away. Waits one loop pass: when a child popup or the previous popup opened in the
      * meantime nothing happens (the opening flow goes on), otherwise the buttons pill (popup opened from the
      * pill) or the control bar comes back.
      */
     private void popupClosed() {
+        mPopupDismissedAt = android.os.SystemClock.uptimeMillis();
         final int generation = mPopupGeneration;
         getWindow().getDecorView().post(() -> {
             if (generation != mPopupGeneration || isFinishing() || mPlayerController == null) return;
+            // the subtitle settings panel took over: no buttons pill / control bar flashing behind it
+            if (mShowingDialogId == DIALOG_SUBTITLE_SETTINGS) return;
+            if (mStripPicked) {   // a video was picked in the list strip
+                mStripPicked = false;
+                mPlayerController.setPhoneTrackPopupOpen(false);
+                mLastOptionsFromPill = false;
+                return;
+            }
             mPlayerController.setPhoneTrackPopupOpen(false);
             mPlayerController.showAfterPopup(mLastOptionsFromPill);
             restoreOptionsButtonFocus();
@@ -3249,6 +3244,21 @@ public class PlayerActivity extends AppCompatActivity implements PlayerControlle
         if (mPlayer != null) mPlayer.switchPlaybackEngine(engine);
     }
 
+    /** Moves the invisible popup anchor a little above the buttons pill (seek bar when there is none) and returns it. */
+    private View popupAnchorAbovePill() {
+        View anchor = findViewById(R.id.audio_popup_anchor);
+        View root = findViewById(R.id.root);
+        int pillTop = PlayerPopup.pillTopOnScreen();
+        if (pillTop <= 0) return popupAnchorAboveSeekBar();
+        if (anchor != null && root != null) {
+            int[] rootLocation = new int[2];
+            root.getLocationOnScreen(rootLocation);
+            anchor.setY(pillTop - rootLocation[1] - Math.round(10 * getResources().getDisplayMetrics().density)
+                    - anchor.getHeight());
+        }
+        return anchor;
+    }
+
     /** Moves the invisible popup anchor onto the top edge of the seek bar and returns it. */
     private View popupAnchorAboveSeekBar() {
         View anchor = findViewById(R.id.audio_popup_anchor);
@@ -3277,7 +3287,7 @@ public class PlayerActivity extends AppCompatActivity implements PlayerControlle
         if (mPlayerController.isMiniUi()) {
             // compact UI: top centre, the control area stays visible while the popup is open
             mPlayerController.showWhilePopupOpen();
-            mAudioInfoController.showAtTopCentered(findViewById(R.id.audio_popup_anchor), false, audioDismissed);
+            mAudioInfoController.showAtBottomCentered(popupAnchorAbovePill(), false, audioDismissed);
         } else {
             mAudioInfoController.showAtBottomEnd(popupAnchorAboveSeekBar(), 12, false, audioDismissed);
         }
@@ -3387,6 +3397,7 @@ public class PlayerActivity extends AppCompatActivity implements PlayerControlle
      * episode is playing, or all movies, recently added first (posters), when a movie is playing.
      */
     public void showMobileVideoStrip() {
+        mLastOptionsFromPill = mPlayerController != null && mPlayerController.isSwipePillShowing();
         final VideoDbInfo info = mVideoInfo;
         final Uri current = mUri;
         final long currentId = mVideoId;
@@ -3497,14 +3508,20 @@ public class PlayerActivity extends AppCompatActivity implements PlayerControlle
                 }
                 final boolean tv = TVUtils.isTV(this) || ArchosFeatures.isAndroidTV(this);
                 PlayerVideoStrip.show(this, episodesList, items, currentIndex,
-                        index -> com.archos.mediacenter.video.utils.PlayUtils.startVideo(this, videos.get(index),
-                                PlayerService.RESUME_FROM_LAST_POS, false, 0, null, -1),
+                        index -> {
+                            mStripPicked = true;   // the video opens: no buttons pill / control bar behind it
+                            if (mPlayerController != null) mPlayerController.hideSwipePillForPanel();
+                            mSwitchVideoFromStrip = true;
+                            com.archos.mediacenter.video.utils.PlayUtils.startVideo(this, videos.get(index),
+                                    PlayerService.RESUME_FROM_LAST_POS, false, 0, null, -1);
+                        },
                         tv ? this::stripClosedNoControls : this::popupClosed);
             });
         }, "player-strip").start();
     }
 
     public void showMobilePlaybackOptions(View anchor) {
+        mPopupReopen = () -> showMobilePlaybackOptions(anchor);
         mLastOptionsButtonId = anchor.getId();
         mLastOptionsFromPill = mPlayerController != null && mPlayerController.isSwipePillShowing();
         if (anchor.getId() == R.id.mobile_video_fit) {
@@ -3560,6 +3577,7 @@ public class PlayerActivity extends AppCompatActivity implements PlayerControlle
                 index -> {
                     if (index == 0) {
                         // app UI settings page (home settings), not the player preferences
+                        mReopenPopupOnResume = true;
                         startActivity(new Intent(this, PlayerSettingsPanelActivity.class));   // right aligned panel over the player
                         return;
                     }
@@ -3584,6 +3602,7 @@ public class PlayerActivity extends AppCompatActivity implements PlayerControlle
                             selectPlaybackEngine(selected);
                         })
                 .create();
+        returnToPopupOnCancel(picker);
         picker.show();
         Window window = picker.getWindow();
         if (window != null) {
@@ -3766,6 +3785,7 @@ public class PlayerActivity extends AppCompatActivity implements PlayerControlle
                     }
                 });
                 AlertDialog dialog = adb.create();
+                returnToPopupOnCancel(dialog);
                 dialog.show();
 
                 Window window = dialog.getWindow();
@@ -4043,19 +4063,6 @@ public class PlayerActivity extends AppCompatActivity implements PlayerControlle
                     audioSpeedPickerDialog.updateSpeed(mPreferences.getFloat(getString(R.string.save_audio_speed_setting_pref_key), 1.0f));
                 mPlayerController.hideKeepingButtonsRow();
                 break;
-            case DIALOG_NOT_ENOUGHT_SPACE:
-                mDialog = new AlertDialog.Builder(this)
-                        .setTitle(R.string.player_err_cantplayvideo)
-                        .setMessage(R.string.error_downloading_not_enough_space)
-                        .setPositiveButton(android.R.string.ok,
-                                new DialogInterface.OnClickListener() {
-                                    public void onClick(DialogInterface dialog, int whichButton) {
-                                        finish();
-                                    }
-                                })
-                        .setCancelable(false)
-                        .create();
-                break;
             case DIALOG_ERROR:
                 if (mErrorCode == IMediaPlayer.MEDIA_ERROR_VE_VIDEO_NOT_ALLOWED) {
                     mDialog = new AlertDialog.Builder(this)
@@ -4103,6 +4110,10 @@ public class PlayerActivity extends AppCompatActivity implements PlayerControlle
         if (mDialog != null) {
             mDialog.setOnDismissListener(this);
             mShowingDialogId = id;
+            if (id != DIALOG_SUBTITLE_SETTINGS && !mReturnToAudioMore
+                    && android.os.SystemClock.uptimeMillis() - mPopupDismissedAt < 1500) {
+                returnToPopupOnCancel(mDialog);   // opened from a button popup: BACK goes back to it
+            }
             mDialog.show();
             if (mDialog.getWindow() != null) {      // night mode dims the dialogs too
                 PlayerController.applyNightModeTo(this, mDialog.getWindow().getDecorView());
@@ -5680,16 +5691,6 @@ public class PlayerActivity extends AppCompatActivity implements PlayerControlle
         public void onEnd() {
             mVideoFinished = true;
             finishWithResult();
-        }
-
-        @Override
-        public void onTorrentUpdate(String daemonString) {
-            mHandler.sendMessage(mHandler.obtainMessage(MSG_TORRENT_UPDATE , daemonString));
-        }
-
-        @Override
-        public void onTorrentNotEnoughSpace() {
-            mHandler.sendEmptyMessage(MSG_TORRENT_NOT_ENOUGH_SPACE);
         }
 
         @Override

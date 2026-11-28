@@ -227,25 +227,18 @@ public final class PlayerPopup {
                 focusIsChecked = e.checked;
             }
         }
-        int maxHeight = (int) (ctx.getResources().getDisplayMetrics().heightPixels * 0.6f);
-        int videoSeekTop = animate ? seekBarTopOnScreen(ctx) : -1;
-        if (topCenter) {   // from the top of the screen down to just above the control area
-            int seekTop = seekBarTopOnScreen(ctx);
-            if (seekTop > 0) maxHeight = Math.max(dp(ctx, 96), Math.min(maxHeight, seekTop - dp(ctx, 60)));
-        } else if (videoSeekTop > 0) maxHeight = Math.max(dp(ctx, 96), Math.min(maxHeight, videoSeekTop - dp(ctx, 72)));
-        ScrollView scroll = side ? new ScrollView(ctx) : new MaxHeightScroll(ctx, maxHeight);
+        final int bottomOffset = abovePillOffset(ctx);   // centred at the bottom, above the buttons pill
+        int screenHeight = ctx.getResources().getDisplayMetrics().heightPixels;
+        int maxHeight = Math.max(dp(ctx, 96), Math.min((int) (screenHeight * (side ? 0.7f : 0.6f)),
+                screenHeight - bottomOffset - dp(ctx, 24)));
+        ScrollView scroll = new MaxHeightScroll(ctx, maxHeight);
         scroll.addView(box);
-        if (side) panel.addView(scroll, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));   // takes the full height, scrolls
-        else panel.addView(scroll, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        panel.addView(scroll, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
         int width = Math.min(ctx.getResources().getDisplayMetrics().widthPixels - dp(ctx, 32), dp(ctx, side ? 320 : 300));
         PlayerController.applyNightModeTo(ctx, panel);   // night mode dims the popups too
         popup.setContentView(panel);
         popup.setWidth(width);
-        if (side) {
-            popup.setHeight(ViewGroup.LayoutParams.MATCH_PARENT);
-            popup.setClippingEnabled(false);   // touches the screen edges
-        }
         popup.setFocusable(true);
         popup.setOutsideTouchable(true);
         popup.setBackgroundDrawable(new GradientDrawable()); // needed so a tap outside dismisses
@@ -256,10 +249,7 @@ public final class PlayerPopup {
             panel.addOnLayoutChangeListener((v, l, t, r, bt, ol, ot, or, ob) -> panel.setPivotY(bt - t)); // grows upwards from the bottom
             panel.setScaleY(0f);
         }
-        if (side) popup.showAtLocation(parent, Gravity.TOP | Gravity.END, 0, 0);   // full height, right aligned, touching the right edge
-        else if (topCenter) popup.showAtLocation(parent, Gravity.TOP | Gravity.CENTER_HORIZONTAL, 0, dp(ctx, 12));   // compact UI
-        else popup.showAtLocation(parent, anim ? (Gravity.BOTTOM | Gravity.END) : (Gravity.TOP | Gravity.CENTER_HORIZONTAL),
-                anim ? dp(ctx, 12) : 0, anim ? aboveSeekBarOffset(ctx) : dp(ctx, 16)); // video lists: bottom right, above the seek bar
+        popup.showAtLocation(parent, Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL, 0, bottomOffset);   // bottom centre, above the buttons pill
         if (anim) panel.animate().scaleY(1f).setDuration(180).start();
         dimBehind(ctx, popup, 0.25f);
         if (focusTarget != null) {
@@ -290,6 +280,26 @@ public final class PlayerPopup {
         int[] location = new int[2];
         seek.getLocationOnScreen(location);
         return location[1];
+    }
+
+    /** The controller that owns the buttons pill (weak: the popups are static helpers). */
+    static java.lang.ref.WeakReference<PlayerController> sController;
+
+    /** Top edge of the buttons pill on screen, or -1 when the player has no such pill. */
+    static int pillTopOnScreen() {
+        PlayerController controller = sController == null ? null : sController.get();
+        return controller == null ? -1 : controller.buttonsPillTopOnScreen();
+    }
+
+    /**
+     * Distance from the bottom of the screen up to a little above the buttons pill position: the buttons popups
+     * are centred at the bottom of the screen, just above it. Without a pill: just above the seek bar.
+     */
+    static int abovePillOffset(Context context) {
+        int top = pillTopOnScreen();
+        if (top < 0) return aboveSeekBarOffset(context);
+        int screen = context.getResources().getDisplayMetrics().heightPixels;
+        return Math.max(0, screen - top) + dp(context, 10);
     }
 
     /** Distance from the bottom of the screen up to just above the seek bar (a small gap included). */
@@ -403,8 +413,9 @@ public final class PlayerPopup {
             box.addView(footer, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         }
         int maxHeight = (int) (ctx.getResources().getDisplayMetrics().heightPixels * 0.6f);
-        int seekTop = seekBarTopOnScreen(ctx);
-        if (seekTop > 0) maxHeight = Math.max(dp(ctx, 96), Math.min(maxHeight, seekTop - dp(ctx, 12) - dp(ctx, 60)));
+        final int bottomOffset = abovePillOffset(ctx);   // centred at the bottom, above the buttons pill
+        maxHeight = Math.max(dp(ctx, 96), Math.min(maxHeight,
+                ctx.getResources().getDisplayMetrics().heightPixels - bottomOffset - dp(ctx, 24)));
         MaxHeightScroll scroll = new MaxHeightScroll(ctx, maxHeight);
         scroll.addView(box);
         panel.addView(scroll, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
@@ -417,8 +428,7 @@ public final class PlayerPopup {
         popup.setOutsideTouchable(true);
         popup.setBackgroundDrawable(new GradientDrawable()); // needed so a tap outside dismisses
         popup.setOnDismissListener(() -> { if (!leaving[0] && onDismiss != null) onDismiss.run(); });
-        if (top) popup.showAtLocation(activity.getWindow().getDecorView(), Gravity.TOP | Gravity.CENTER_HORIZONTAL, 0, dp(ctx, 12));   // compact UI
-        else popup.showAtLocation(activity.getWindow().getDecorView(), Gravity.BOTTOM | Gravity.END, dp(ctx, 12), aboveSeekBarOffset(ctx)); // bottom right, on the seek bar
+        popup.showAtLocation(activity.getWindow().getDecorView(), Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL, 0, bottomOffset);   // bottom centre, above the buttons pill
         final View target = firstEnabled != null ? firstEnabled : back;
         target.post(target::requestFocus); // no effect in touch mode
         return popup;

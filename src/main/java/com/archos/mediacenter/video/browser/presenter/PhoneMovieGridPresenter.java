@@ -4,7 +4,6 @@ import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.GridView;
 
 import com.archos.mediacenter.utils.ThumbnailEngine;
 import com.archos.mediacenter.video.R;
@@ -30,16 +29,7 @@ public final class PhoneMovieGridPresenter extends VideoGridPresenter {
             holder.watchedIcon = card.findViewById(R.id.watched_status);
             card.setTag(holder);
         }
-        float density = mContext.getResources().getDisplayMetrics().density;
-        int screenWidth = mContext.getResources().getConfiguration().screenWidthDp;
-        int columns = Math.max(2, screenWidth / 180);
-        int width = Math.round((screenWidth - 32 - (columns - 1) * 12) * density / columns);
-        if (parent instanceof GridView && ((GridView) parent).getColumnWidth() > 0)
-            width = ((GridView) parent).getColumnWidth();
-        View poster = card.findViewById(R.id.phone_movie_poster);
-        ViewGroup.LayoutParams size = poster.getLayoutParams();
-        size.height = Math.round(width * 1.5f);
-        poster.setLayoutParams(size);
+        PhoneCardStyle.sizePoster(card, parent);
         return card;
     }
 
@@ -51,11 +41,11 @@ public final class PhoneMovieGridPresenter extends VideoGridPresenter {
         holder.watchedIcon.setVisibility(video.isWatched() ? View.VISIBLE : View.GONE);
         card.findViewById(R.id.pinned_icon).setVisibility(
                 video instanceof Movie && ((Movie) video).isPinned() ? View.VISIBLE : View.GONE);
-        if (video instanceof Movie && ((Movie) video).getYear() > 0) {
-            String duration = video.getDurationMs() > 0 ? holder.info.getText().toString() : "";
-            holder.info.setText(((Movie) video).getYear() + (duration.isEmpty() ? "" : " · " + duration));
-            holder.info.setVisibility(View.VISIBLE);
-        }
+        final String duration = video.getDurationMs() > 0 && holder.info != null ? holder.info.getText().toString() : "";
+        final int year = video instanceof Movie ? ((Movie) video).getYear() : 0;
+        PhoneCardStyle.setRow(card, R.string.phone_card_year, year > 0 ? String.valueOf(year) : "",
+                R.string.phone_card_duration, duration);
+        PhoneCardStyle.tint(card, result == null ? null : result.getThumbnail());
         return card;
     }
 }

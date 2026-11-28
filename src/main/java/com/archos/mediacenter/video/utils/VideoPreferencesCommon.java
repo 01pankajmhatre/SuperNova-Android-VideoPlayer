@@ -142,8 +142,6 @@ public class VideoPreferencesCommon implements OnSharedPreferenceChangeListener 
     public static final String KEY_NETSHARE_CATEGORY = "netshare_category";
     public static final String KEY_ADVANCED_3D_TV_SWITCH_SUPPORTED = "preferences_tv_switch_supported";
     public static final String KEY_ADVANCED_VIDEO_QUIT = "preferences_video_advanced_quit";
-    public static final String KEY_TORRENT_BLOCKLIST = "preferences_torrent_blocklist";
-    public static final String KEY_TORRENT_PATH = "preferences_torrent_path";
     public static final String KEY_SHARED_FOLDERS= "share_folders";
     public static final String KEY_SUBTITILES_CREDENTIALS= "subtitles_credentials";
     public static final String KEY_FORCE_SW = "force_software_decoding";
@@ -316,39 +314,15 @@ public class VideoPreferencesCommon implements OnSharedPreferenceChangeListener 
     List<String> UiLanguageListEntries = new ArrayList<>();
     List<String> UiLanguageListEntryValues = new ArrayList<>();
 
-    private final ActivityResultLauncher<Intent> mFolderPickerLauncher;
     private final ActivityResultLauncher<Intent> mFontsFolderTreeLauncher;
     public VideoPreferencesCommon(PreferenceFragmentCompat preferencesFragment) {
         mPreferencesFragment = preferencesFragment;
-        mFolderPickerLauncher = preferencesFragment.registerForActivityResult(
-                new ActivityResultContracts.StartActivityForResult(),
-                this::onFolderPickerResult);
         mFontsFolderTreeLauncher = preferencesFragment.registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 this::onFontsFolderTreeResult);
     }
 
-    private void onFolderPickerResult(ActivityResult result) {
-        if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {
-            String newPath = result.getData().getStringExtra(FolderPicker.EXTRA_SELECTED_FOLDER);
-            if (newPath != null) {
-                java.io.File f = new java.io.File(newPath);
-                if (f.isDirectory() && f.exists()) {
-                    PreferenceManager.getDefaultSharedPreferences(getActivity())
-                            .edit().putString(KEY_TORRENT_PATH, f.getAbsolutePath()).apply();
-                    TorrentPathDialogPreference pref =
-                            (TorrentPathDialogPreference) findPreference(KEY_TORRENT_PATH);
-                    if (pref != null) pref.notifyChanged();
-                }
-            }
-        }
-    }
-
     // Handles the result of FontsFolderSafPreference's ACTION_OPEN_DOCUMENT_TREE launch.
-    // Separate from onFolderPickerResult() above both because it's a structurally different
-    // result shape (a content:// tree URI, not a plain path string) and because
-    // registerForActivityResult() callbacks are matched by request code under the hood --
-    // routing two different pickers through one shared callback isn't workable here anyway.
     //
     // Why SAF instead of the old FolderPicker-based flow: this app only holds the granular
     // "Photos and videos" media permissions, not MANAGE_EXTERNAL_STORAGE. Under scoped
@@ -837,10 +811,6 @@ public class VideoPreferencesCommon implements OnSharedPreferenceChangeListener 
         autoPopup.setVisible(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
                 && getContext().getPackageManager().hasSystemFeature(
                         PackageManager.FEATURE_PICTURE_IN_PICTURE));
-
-        TorrentPathDialogPreference torrentPref =
-                (TorrentPathDialogPreference) findPreference(KEY_TORRENT_PATH);
-        if (torrentPref != null) torrentPref.setFolderPickerLauncher(mFolderPickerLauncher);
 
         FontsFolderSafPreference fontsFolderPref =
                 (FontsFolderSafPreference) findPreference(KEY_SUBTITLE_FONTS_FOLDER_URI);
@@ -1592,9 +1562,6 @@ public class VideoPreferencesCommon implements OnSharedPreferenceChangeListener 
                 });
             }
         }
-
-        findPreference(KEY_TORRENT_BLOCKLIST).setOnPreferenceClickListener(null);
-        findPreference(KEY_TORRENT_PATH).setOnPreferenceClickListener(null);
 
 
     }

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <com.github.ksoichiro.android.observablescrollview.ObservableScrollView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent" android:id="@+id/scrollView" android:fillViewport="true">
-    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:id="@+id/scroll_content" android:background="#9907111C" android:paddingBottom="@dimen/activity_vertical_margin" android:paddingStart="16dp" android:paddingEnd="16dp" android:orientation="vertical">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:id="@+id/scroll_content" android:paddingBottom="@dimen/activity_vertical_margin" android:paddingStart="16dp" android:paddingEnd="16dp" android:orientation="vertical">
         <!-- single container (original page background): backdrop, title, rating row, genre, description -->
         <androidx.cardview.widget.CardView android:id="@+id/poster_action_container" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="16dp" app:cardCornerRadius="0dp" app:cardElevation="@dimen/video_info_cardview_elevation">
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">

@@ -968,6 +968,7 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
                 ((PlayerActivity) mContext).showMobilePlaybackOptions(button);
             }
         });
+        bindPillStripButton(pill);
 
         pill.findViewById(R.id.mobile_controls_toggle).setOnClickListener(
                 button -> setCompactPillExpanded(view, true));
@@ -1012,6 +1013,18 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
                 R.id.mobile_subtitles, R.id.mobile_audio, R.id.mobile_video_fit}) {
             View button = view.findViewById(id);
             if (button != null) button.setNextFocusUpId(R.id.seek_progress);
+        }
+        if (hideExtraButtonsActive()) {
+            // only backward / play / forward are left: the cursor stays on them (nothing beyond forward or backward,
+            // DOWN is the list strip key, see handlePhoneRemoteKey)
+            View backward = view.findViewById(R.id.backward);
+            View forward = view.findViewById(R.id.forward);
+            if (backward != null) backward.setNextFocusLeftId(R.id.backward);
+            if (forward != null) forward.setNextFocusRightId(R.id.forward);
+            for (int id : new int[]{R.id.backward, R.id.pause, R.id.forward}) {
+                View button = view.findViewById(id);
+                if (button != null) button.setNextFocusDownId(id);
+            }
         }
     }
 
@@ -1218,6 +1231,14 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
         pill.findViewById(R.id.mobile_controls_close).setOnClickListener(button -> dismissSwipePill(true));
         mSwipePillOverlay = overlay;
         mSwipePill = pill;
+        PlayerPopup.sController = new java.lang.ref.WeakReference<>(this);
+    }
+
+    /** Top edge of the buttons pill on screen (where it opens, shifted down from the seek bar line), or -1 without pill. */
+    int buttonsPillTopOnScreen() {
+        if (mSwipePill == null) return -1;
+        int height = mContext.getResources().getDimensionPixelSize(R.dimen.mobile_controls_buttons_height);
+        return swipeSeekCenterY() - height / 2 + swipeDp(16);
     }
 
     private void showSwipePill() {
@@ -1457,8 +1478,18 @@ public class PlayerController implements View.OnTouchListener, OnGenericMotionLi
         pill.findViewById(R.id.mobile_audio).setOnClickListener(optionsListener);
         pill.findViewById(R.id.mobile_subtitles).setOnClickListener(optionsListener);
         pill.findViewById(R.id.mobile_more).setOnClickListener(optionsListener);
+        bindPillStripButton(pill);
         bindNightModeButton(root, pill);
         setupSwipePill(root, pill);
+    }
+
+    /** The list strip button of the buttons pill: episodes / movies strip. */
+    private void bindPillStripButton(View pill) {
+        View strip = pill.findViewById(R.id.mobile_pill_strip);
+        if (strip == null) return;
+        strip.setOnClickListener(button -> {
+            if (!mIsStopped && mContext instanceof PlayerActivity) ((PlayerActivity) mContext).showMobileVideoStrip();
+        });
     }
 
     /** Keys while the pill is open: D-pad moves between its buttons (handled by focus), DOWN/BACK close it. */

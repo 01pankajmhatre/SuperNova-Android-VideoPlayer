@@ -136,11 +136,7 @@ public class BrowserCategoryVideo extends BrowserCategory implements androidx.ap
     @Override
     public void onResume() {
         // Apply theme colors to actionbar - safe to do here when ActionBar is initialized
-        if (getActivity() != null && ((AppCompatActivity)getActivity()).getSupportActionBar() != null) {
-            ((AppCompatActivity)getActivity()).getSupportActionBar().setBackgroundDrawable(
-                new android.graphics.drawable.ColorDrawable(ThemeManager.getInstance(getActivity()).getToolbarBackgroundColor())
-            );
-        }
+        MainActivity.applyThemeToolbarColor(getActivity());
         super.onResume();
         if (getActivity() instanceof MainActivity)
             ((MainActivity) getActivity()).updatePhoneHomeActionBar();

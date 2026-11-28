@@ -120,8 +120,6 @@
     because the right part of the quote is
     not visible otherwise -->
     <string name="exit">Shıǵıw</string>
-    <!-- torrent -->
-    <string name="error_no_video_file">Video fayllar joq</string>
     <!-- Shortcuts -->
     <string name="ssh_prompt">FTP túri</string>
     <string name="add_to_library">Kitapxanaǵa qosıw</string>
@@ -158,7 +156,6 @@
     <string name="codepage_extra_1256">(CP1256)</string>
     <string name="codepage_extra_1257">(CP1257)</string>
     <string name="codepage_extra_1258">(CP1258)</string>
-    <string name="torrent_category">Torrent</string>
     
     
     

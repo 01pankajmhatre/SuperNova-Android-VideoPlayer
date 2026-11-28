@@ -1500,12 +1500,8 @@ public class VideoDetailsFragment extends DetailsFragmentWithLessTopOffset imple
         // A DB/poster reload for the same URI can reuse the provisional overview's work.
         if (mVideoInfoTask == null || !mVideoInfoTask.isLoading(video)) {
             if (mVideoInfoTask != null) mVideoInfoTask.cancel();
-            // Do not execute file info task when torrent file.
-            if (video.getFileUri() == null || mLaunchedFromPlayer
-                    || !FileUtils.getName(video.getFileUri()).endsWith("torrent")) {
-                mVideoInfoTask = new VideoInfoTask();
-                mVideoInfoTask.execute(video);
-            }
+            mVideoInfoTask = new VideoInfoTask();
+            mVideoInfoTask.execute(video);
         }
 
         if (poster == null) {

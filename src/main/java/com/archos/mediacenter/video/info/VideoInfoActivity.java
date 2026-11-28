@@ -57,13 +57,6 @@ public class VideoInfoActivity extends AppCompatActivity {
     public static final String PREF_PHONE_DETAILS_PAGE3 = "phone_details_page3";
     public static final String EXTRA_PHONE_DETAILS_PAGE3 = "phone_details_page3";
 
-    /** Settings > TV show details page > Page 2: episode details use the page 3 style. */
-    public static final String PREF_TVSHOW_DETAILS_PAGE2 = "tvshow_details_page2";
-
-    public static boolean isTvShowPage2Enabled(Context context) {
-        return androidx.preference.PreferenceManager.getDefaultSharedPreferences(context).getBoolean(PREF_TVSHOW_DETAILS_PAGE2, false);
-    }
-
     public static boolean isPage3Enabled(Context context) {
         return androidx.preference.PreferenceManager.getDefaultSharedPreferences(context).getBoolean(PREF_PHONE_DETAILS_PAGE3, false);
     }
@@ -93,11 +86,26 @@ public class VideoInfoActivity extends AppCompatActivity {
     private Fragment mCurrentFragment;
 
 
+    @SuppressWarnings("deprecation")
+    @Override
+    public void finish() {
+        super.finish();
+        if (Build.VERSION.SDK_INT < 34)
+            overridePendingTransition(R.anim.home_slide_in_left, R.anim.home_slide_out_right);
+    }
+
     @SuppressWarnings({"deprecation", "unchecked"}) // getSerializableExtra: API 33+ branch uses typed form; else branch suppressed
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         if (DBG) Log.d(TAG,"onCreate");
         super.onCreate(savedInstanceState);
+        // open: slide in from the right; back: slide in from the left
+        if (Build.VERSION.SDK_INT >= 34) {
+            overrideActivityTransition(OVERRIDE_TRANSITION_OPEN, R.anim.home_slide_in_right, R.anim.home_slide_out_left);
+            overrideActivityTransition(OVERRIDE_TRANSITION_CLOSE, R.anim.home_slide_in_left, R.anim.home_slide_out_right);
+        } else {
+            overridePendingTransition(R.anim.home_slide_in_right, R.anim.home_slide_out_left);
+        }
         ViewGroup globalLayout = (ViewGroup) getWindow().getDecorView();
 
         if(getIntent().hasExtra(EXTRA_VIDEO_PATHS))
@@ -251,11 +259,12 @@ public class VideoInfoActivity extends AppCompatActivity {
                                       boolean allowTvStylePage) {
         final boolean phoneMovie = currentVideo instanceof com.archos.mediacenter.video.browser.adapters.object.Movie
                 && com.archos.mediacenter.video.utils.ThemeManager.getInstance(context).isPhoneMode(context);
+        // one setting for movies and TV show episodes
         final boolean phoneEpisode = currentVideo instanceof com.archos.mediacenter.video.browser.adapters.object.Episode
                 && com.archos.mediacenter.video.utils.ThemeManager.getInstance(context).isPhoneMode(context);
-        final boolean episodePage2 = allowTvStylePage && phoneEpisode && isTvShowPage2Enabled(context);
+        final boolean phoneVideo = phoneMovie || phoneEpisode;
         // Settings > Movie details page: the standard phone page, or the real TV details page (TV layout)
-        final boolean tvLayout = allowTvStylePage && phoneMovie && isTvLayoutEnabled(context);
+        final boolean tvLayout = allowTvStylePage && phoneVideo && isTvLayoutEnabled(context);
         if (tvLayout) {
             // the real TV details page (leanback): sources, trailers, posters, backdrops, links
             Intent tv = new Intent(context, com.archos.mediacenter.video.leanback.details.PhoneTvLayoutDetailsActivity.class);
@@ -269,9 +278,10 @@ public class VideoInfoActivity extends AppCompatActivity {
             return tv;
         }
         Intent intent = new Intent(context, VideoInfoActivity.class);
-        intent.putExtra(EXTRA_PHONE_MOVIE_DETAILS, (phoneMovie && !tvLayout) || episodePage2);   // false: the fragment inflates the TV layout
+        intent.putExtra(EXTRA_PHONE_MOVIE_DETAILS, (phoneMovie && !tvLayout)
+                || (phoneEpisode && !tvLayout && allowTvStylePage && isPage3Enabled(context)));   // false: the fragment inflates the TV layout
         intent.putExtra(EXTRA_TV_LAYOUT, tvLayout);
-        intent.putExtra(EXTRA_PHONE_DETAILS_PAGE3, (allowTvStylePage && phoneMovie && !tvLayout && isPage3Enabled(context)) || episodePage2);
+        intent.putExtra(EXTRA_PHONE_DETAILS_PAGE3, allowTvStylePage && phoneVideo && !tvLayout && isPage3Enabled(context));
         if (currentVideo != null)
             intent.putExtra(VideoInfoActivityFragment.EXTRA_VIDEO, currentVideo);
         if (paths != null)

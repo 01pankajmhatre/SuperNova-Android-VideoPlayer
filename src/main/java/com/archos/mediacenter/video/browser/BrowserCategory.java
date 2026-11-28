@@ -1764,6 +1764,7 @@ abstract public class BrowserCategory extends ListFragment {
         ((TextView) row.findViewById(R.id.home_row_title)).setText(titleRes);
         RecyclerView rv = row.findViewById(R.id.home_row_list);
         rv.setLayoutManager(new SensitiveLinearLayoutManager(requireContext()));
+        attachSwipeToOpen(rv, row.getId());
         rv.setAdapter(adapter);
         return row.findViewById(R.id.home_row_status);
     }
@@ -2144,13 +2145,79 @@ abstract public class BrowserCategory extends ListFragment {
 
     /** True while the swipe animation moves the page itself (the fragment enter animation would double it). */
     private boolean mSuppressContentAnim;
+    /** Opening a row's page by swiping right: the page slides in from the left, pushing Home out to the right. */
+    private boolean mSlideFromLeft;
+
+    private void openRowPageFromSwipe(int rowId) {
+        if (!isAdded() || getActivity() == null) return;
+        final boolean poster = mPreferences.getBoolean(HOME_POSTER_PAGE, true);
+        mSlideFromLeft = true;
+        try {
+            if (rowId == R.id.home_movies_row && poster) openPosterGrid(false);
+            else if (rowId == R.id.home_series_row && poster) openPosterGrid(true);
+            else if (rowId == R.id.home_movies_row) startContent(new com.archos.mediacenter.video.browser.BrowserByIndexedVideos.BrowserAllMovies());
+            else if (rowId == R.id.home_series_row) startContent(new com.archos.mediacenter.video.browser.BrowserByIndexedVideos.BrowserAllTvShows());
+            else if (rowId == R.id.home_recent_row) startContent(new com.archos.mediacenter.video.browser.BrowserByIndexedVideos.BrowserLastPlayed());
+            else if (rowId == R.id.home_added_row) startContent(new com.archos.mediacenter.video.browser.BrowserByIndexedVideos.BrowserLastAdded());
+            else if (rowId == R.id.home_all_row) startContent(new com.archos.mediacenter.video.browser.BrowserByIndexedVideos.BrowserAllVideos());
+        } finally {
+            mSlideFromLeft = false;
+        }
+    }
+
+    /** A row resting at its start: swiping right opens the row's own page. */
+    private void attachSwipeToOpen(RecyclerView rv, final int rowId) {
+        final int slop = android.view.ViewConfiguration.get(rv.getContext()).getScaledTouchSlop();
+        final float trigger = 64 * rv.getResources().getDisplayMetrics().density;
+        rv.addOnItemTouchListener(new RecyclerView.OnItemTouchListener() {
+            float downX, downY;
+            boolean armed, fired;
+
+            @Override
+            public boolean onInterceptTouchEvent(RecyclerView v, android.view.MotionEvent e) {
+                switch (e.getActionMasked()) {
+                    case android.view.MotionEvent.ACTION_DOWN:
+                        downX = e.getX(); downY = e.getY();
+                        armed = !v.canScrollHorizontally(-1);
+                        fired = false;
+                        break;
+                    case android.view.MotionEvent.ACTION_MOVE:
+                        if (armed && !fired) {
+                            float dx = e.getX() - downX, dy = Math.abs(e.getY() - downY);
+                            if (dx > slop && dx > dy * 1.5f) {
+                                v.getParent().requestDisallowInterceptTouchEvent(true);
+                                return true;
+                            }
+                            if (dx < -slop) armed = false;   // moving the row itself
+                        }
+                        break;
+                }
+                return false;
+            }
+
+            @Override
+            public void onTouchEvent(RecyclerView v, android.view.MotionEvent e) {
+                if (e.getActionMasked() == android.view.MotionEvent.ACTION_MOVE && !fired
+                        && e.getX() - downX >= trigger) {
+                    fired = true;
+                    openRowPageFromSwipe(rowId);
+                }
+            }
+
+            @Override
+            public void onRequestDisallowInterceptTouchEvent(boolean disallow) { }
+        });
+    }
 
     private void updateCategoryContent(Fragment fragment, String tag) {
         // Update the content of the fragment corresponding to the current category
         FragmentManager fm = getParentFragmentManager();
         if (fm != null) {
             FragmentTransaction ft = getParentFragmentManager().beginTransaction();
-            if (!mSuppressContentAnim) {
+            if (mSlideFromLeft) {
+                ft.setCustomAnimations(R.anim.home_slide_in_left, R.anim.home_slide_out_right,
+                    R.anim.home_slide_in_right, R.anim.home_slide_out_left);
+            } else if (!mSuppressContentAnim) {
                 ft.setCustomAnimations(R.anim.browser_content_enter,
                     R.anim.browser_content_exit, R.anim.browser_content_pop_enter,
                     R.anim.browser_content_pop_exit);

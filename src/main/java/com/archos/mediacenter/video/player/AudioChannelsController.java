@@ -92,7 +92,26 @@ final class AudioChannelsController {
 
         LinearLayout content = new LinearLayout(activity);
         content.setOrientation(LinearLayout.VERTICAL);
-        content.setPadding(dp(12), dp(10), dp(12), dp(4));
+        content.setPadding(dp(12), dp(4), dp(12), dp(4));
+        // Back (previous popup) at the top
+        LinearLayout header = new LinearLayout(activity);
+        header.setGravity(Gravity.CENTER_VERTICAL);
+        TextView back = label(R.string.mobile_player_back, 14, Color.WHITE);
+        back.setMinHeight(dp(44));
+        back.setGravity(Gravity.CENTER_VERTICAL);
+        back.setPadding(dp(8), 0, dp(12), 0);
+        back.setFocusable(true);
+        back.setClickable(true);
+        android.util.TypedValue backBackground = new android.util.TypedValue();
+        if (activity.getTheme().resolveAttribute(android.R.attr.selectableItemBackground, backBackground, true)) {
+            back.setBackgroundResource(backBackground.resourceId);
+        }
+        back.setOnClickListener(view -> { if (dialog != null) dialog.dismiss(); });
+        header.addView(back);
+        TextView title = label(R.string.audio_channels_title, 14, 0xFF9FB3D1);
+        title.setTypeface(title.getTypeface(), android.graphics.Typeface.BOLD);
+        header.addView(title, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        content.addView(header);
         layoutLabel = label(R.string.audio_channels_detecting, 12, 0xFFC3CEDD);
         content.addView(layoutLabel);
         AppCompatCheckBox combine = new AppCompatCheckBox(activity);
@@ -111,7 +130,31 @@ final class AudioChannelsController {
             updateChannelRows();
             save();
         });
-        content.addView(combine);
+        // Reset sits next to Combine Channels
+        TextView reset = label(R.string.audio_channels_reset, 12, Color.WHITE);
+        reset.setMinHeight(dp(36));
+        reset.setGravity(Gravity.CENTER);
+        reset.setPadding(dp(12), 0, dp(12), 0);
+        reset.setFocusable(true);
+        reset.setClickable(true);
+        android.util.TypedValue resetBackground = new android.util.TypedValue();
+        if (activity.getTheme().resolveAttribute(android.R.attr.selectableItemBackground, resetBackground, true)) {
+            reset.setBackgroundResource(resetBackground.resourceId);
+        }
+        reset.setOnClickListener(button -> {
+            for (int i = 1; i < sliders.length; i++) {
+                settings.setGain(i, 100);
+                if (sliders[i] != null) sliders[i].setProgress(100);
+                if (percentages[i] != null) percentages[i].setText(activity.getString(R.string.audio_channels_percent, 100));
+            }
+            apply();
+            save();
+        });
+        LinearLayout combineRow = new LinearLayout(activity);
+        combineRow.setGravity(Gravity.CENTER_VERTICAL);
+        combineRow.addView(combine, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        combineRow.addView(reset, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        content.addView(combineRow);
 
         int[] names = {R.string.audio_channels_master, R.string.audio_channels_front,
                 R.string.audio_channels_center, R.string.audio_channels_lfe,
@@ -127,8 +170,6 @@ final class AudioChannelsController {
 
         dialog = new AlertDialog.Builder(activity)
                 .setView(scroll)
-                .setNeutralButton(R.string.audio_channels_reset, null)
-                .setPositiveButton(R.string.audio_channels_close, (value, which) -> value.dismiss())
                 .create();
         dialog.setOnDismissListener(value -> {
             handler.removeCallbacks(pollLayout);
@@ -139,16 +180,6 @@ final class AudioChannelsController {
         });
         dialog.show();
         if (dialog.getWindow() != null) PlayerController.applyNightModeTo(activity, dialog.getWindow().getDecorView());
-        dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener(button -> {
-
-            for (int i = 1; i < sliders.length; i++) {
-                settings.setGain(i, 100);
-                sliders[i].setProgress(100);
-                percentages[i].setText(activity.getString(R.string.audio_channels_percent, 100));
-            }
-            apply();
-            save();
-        });
         Window window = dialog.getWindow();
         if (window != null) {
             window.setBackgroundDrawableResource(R.drawable.mobile_controls_pill);

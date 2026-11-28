@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Settings (home page) > Movie details page -->
-    <string name="phone_details_style">Movie details page</string>
+    <string name="phone_details_style">Movie and TV show details page</string>
     <string name="phone_details_style_standard">Standard phone page</string>
     <string name="phone_details_style_tv">TV-style page (separate page, TV UI not affected)</string>
     <!-- TV-style details page on the phone UI -->

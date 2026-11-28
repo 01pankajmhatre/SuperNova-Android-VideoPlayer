@@ -590,6 +590,23 @@ public class TrackInfoController implements OnMenuItemClickListener, OnItemClick
         showAt(anchor, onDismiss);
     }
 
+    /** Compact UI: the track list opens centred, sitting just above {@code anchor} (placed above the buttons pill). */
+    public void showAtBottomCentered(View anchor, boolean compact, Runnable onDismiss) {
+        mTextSize = 14;
+        mPopupFooter = null;
+        mTopCentered = true;
+        mCompactSubtitles = compact;
+        mSubtitleTracksExpanded = false;
+        mFitAbove = true;
+        mFitAnchor = anchor;
+        mTrackInfoAdapter.notifyDataSetChanged();
+        if (mPopup != null && anchor != null) {
+            mPopup.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(PlayerPopup.PANEL_BACKGROUND));
+            fitTopPopup();   // sized to its rows and put right above the anchor (the bottom edge of the popup sits on it)
+        }
+        showAt(anchor, onDismiss);
+    }
+
     public void showAtTopEnd(View anchor, float endInsetDp, Runnable onDismiss) {
         showAtTopEnd(anchor, endInsetDp, false, onDismiss);
     }
@@ -611,6 +628,7 @@ public class TrackInfoController implements OnMenuItemClickListener, OnItemClick
             int wanted = mContext.getResources().getDimensionPixelSize(R.dimen.phone_subtitles_popup_width);
             int width = Math.min(wanted, Math.max(1, anchor.getWidth() - Math.round(32 * density)));
             mPopup.setVerticalOffset(Math.round(4 * density));
+            mFitAbove = false;
             mFitAnchor = anchor;
             fitTopPopup();
         }
@@ -618,6 +636,7 @@ public class TrackInfoController implements OnMenuItemClickListener, OnItemClick
     }
 
     private View mFitAnchor;   // set while the top centred popup is sized to its content
+    private boolean mFitAbove;   // the popup sits above the anchor (bottom centred) instead of below it
 
     /** Sizes the height of the top centred popup to its rows: no empty space below them. */
     private void fitTopPopup() {
@@ -638,9 +657,16 @@ public class TrackInfoController implements OnMenuItemClickListener, OnItemClick
         }
         int seekTop = PlayerPopup.seekBarTopOnScreen(mContext);
         int available = seekTop > 0 ? seekTop - Math.round(60 * density) : -1;
+        if (mFitAbove) {   // bottom centred: the popup ends on the bottom edge of the anchor, above the buttons pill
+            int[] location = new int[2];
+            anchor.getLocationOnScreen(location);
+            available = location[1] + anchor.getHeight() - Math.round(24 * density);
+        }
+        int height = available > 0 && total > available ? available : Math.max(1, total);
         mPopup.setWidth(width);
         mPopup.setHorizontalOffset((anchor.getWidth() - width) / 2);
-        mPopup.setHeight(available > 0 && total > available ? available : Math.max(1, total));
+        mPopup.setHeight(height);
+        if (mFitAbove) mPopup.setVerticalOffset(-height);
     }
 
     public void showAtTopEnd(View anchor, float endInsetDp, boolean square, Runnable onDismiss) {

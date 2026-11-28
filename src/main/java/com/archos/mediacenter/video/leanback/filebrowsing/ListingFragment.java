@@ -618,7 +618,7 @@ public abstract class ListingFragment extends MyVerticalGridFragment implements 
                     else {
                         String mimeType = file.getMimeType();
                         if (mimeType!=null) {
-                            if (mimeType.startsWith("video/")||mimeType.equals("application/x-bittorrent")) {
+                            if (mimeType.startsWith("video/")) {
                                 Uri thumbnailUri = null;// Get upnp thumbnail if available
                                 if (file instanceof UpnpFile2) {
                                     thumbnailUri = ((UpnpFile2)file).getThumbnailUri();
@@ -627,7 +627,7 @@ public abstract class ListingFragment extends MyVerticalGridFragment implements 
                                 newObject = new NonIndexedVideo(file.getStreamingUri(),file.getUri(), file.getName(), thumbnailUri); // Add a non-indexed video object
                             }
                             else  {
-                                newObject = file; // Add a regular MetaFile2 object for now, maybe later we'll create a dedicated torrent object?
+                                newObject = file; // Add a regular MetaFile2 object
                             }
 
                         }

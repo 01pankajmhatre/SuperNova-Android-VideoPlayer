@@ -31,7 +31,7 @@ tasks.register('novaNativeBuild', Exec) {
     commandLine nativeCommand + ['NDK_CPU_ARM_NEON=1', 'NDK_CPU_ARM_64=1',
                                  'NDK_CPU_X86=0', 'NDK_CPU_X86_64=0',
                                  'native_libnativehelper', 'native_build_FileCoreLibrary',
-                                 'native_avos_full', 'native_torrentd']
+                                 'native_avos_full']
 }
 
 tasks.register('novaNativeClean', Exec) {

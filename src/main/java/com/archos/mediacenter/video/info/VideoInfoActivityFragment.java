@@ -427,6 +427,7 @@ public class VideoInfoActivityFragment extends Fragment implements LoaderManager
         mPage3 = page3;
         if (page3) {
             // page background keeps the original faint backdrop; the top image of the container is at 100%
+            mBackgroundLoader = new DelayedBackgroundLoader(getActivity(), 0, 1f); // page backdrop at 100%, no dark overlay
             mBackgroundLoaderTop = new DelayedBackgroundLoader(getActivity(), 0, 1f, 8192, 8192); // original size
             mBackgroundSetterTop = new ImageViewSetter(getActivity(), ImageViewSetterConfiguration.Builder.createNew().setUseCache(false).build());
         }
@@ -1596,21 +1597,18 @@ public class VideoInfoActivityFragment extends Fragment implements LoaderManager
 
     public void startAsyncTasks() {
         if (log.isDebugEnabled()) log.debug("startAsyncTasks with {}", mCurrentVideo.getFilePath());
-        //do not execute file info task when torrent file
         String getLastPathSegment = FileUtils.getName(mCurrentVideo.getFileUri());
         if((mCurrentVideo.getFileUri() != null &&
-                getLastPathSegment != null &&
-                !getLastPathSegment.endsWith("torrent")) ||
+                getLastPathSegment != null) ||
                 mIsLaunchFromPlayer) {
-            if (log.isDebugEnabled()) log.debug("startAsyncTasks not a torrent or mIsLaunchFromPlayer starting VideoInfoTask for {}", mCurrentVideo.getFilePath());
+            if (log.isDebugEnabled()) log.debug("startAsyncTasks starting VideoInfoTask for {}", mCurrentVideo.getFilePath());
             if (mVideoInfoTask != null)
                 mVideoInfoTask.cancel();
             mVideoInfoTask = new VideoInfoTask();
             mVideoInfoTask.execute(mCurrentVideo);
         }
         else{
-            if (log.isDebugEnabled()) log.debug("startAsyncTasks torrent and not mIsLaunchFromPlayer removing views {}", mCurrentVideo.getFilePath());
-            if (log.isDebugEnabled()) log.debug("startAsyncTasks: hiding file info views for torrent file");
+            if (log.isDebugEnabled()) log.debug("startAsyncTasks no file uri and not mIsLaunchFromPlayer removing views {}", mCurrentVideo.getFilePath());
             mFileInfoAudioVideoContainer.setVisibility(View.GONE);
             mFileError.setVisibility(View.GONE);
             mFileInfoContainerLoading.setVisibility(View.GONE);

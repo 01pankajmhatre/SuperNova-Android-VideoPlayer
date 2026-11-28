@@ -287,7 +287,6 @@
                 <data android:mimeType="audio/mpegurl"/>
                 <data android:mimeType="audio/x-mpegurl"/>
                 <data android:mimeType="application/x-shockwave-flash"/>
-                <data android:mimeType="application/x-bittorrent"/>
             </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.VIEW"/>
@@ -320,7 +319,6 @@
                 <data android:mimeType="audio/mpegurl"/>
                 <data android:mimeType="audio/x-mpegurl"/>
                 <data android:mimeType="application/x-shockwave-flash"/>
-                <data android:mimeType="application/x-bittorrent"/>
             </intent-filter>
             <!--
             such ugly explicit matching is required because Android primitive PatternMatcher where <data android:pathPattern=".*\\.mkv" />
@@ -345,11 +343,9 @@
                 <data android:scheme="sshj" />
                 <data android:scheme="webdav" />
                 <data android:scheme="webdavs" />
-                <data android:scheme="magnet"/>
                 <data android:host="*" />
                 <data android:mimeType="video/*" />
                 <data android:mimeType="application/*" />
-                <data android:mimeType="application/x-bittorrent" />
                 <data android:pathPattern=".*\\.3g2" />
                 <data android:pathPattern=".*\\..*\\.3g2" />
                 <data android:pathPattern=".*\\..*\\..*\\.3g2" />
@@ -733,7 +729,6 @@
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\.MTV" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\.OGV" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\.QT" />
-                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\.TORRENT" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\.VOB" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\.WEBM" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\.WTV" />
@@ -755,7 +750,6 @@
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\.ogv" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\.ogx" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\.qt" />
-                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\.torrent" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\.vob" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\.webm" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\.wtv" />
@@ -783,7 +777,6 @@
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.MTV" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.OGV" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.QT" />
-                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.TORRENT" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.VOB" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.WEBM" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.WTV" />
@@ -805,7 +798,6 @@
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.ogv" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.ogx" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.qt" />
-                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.torrent" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.vob" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.webm" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.wtv" />
@@ -833,7 +825,6 @@
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.MTV" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.OGV" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.QT" />
-                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.TORRENT" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.VOB" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.WEBM" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.WTV" />
@@ -855,7 +846,6 @@
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.ogv" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.ogx" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.qt" />
-                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.torrent" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.vob" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.webm" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.wtv" />
@@ -883,7 +873,6 @@
                 <data android:pathPattern=".*\\..*\\..*\\..*\\.MTV" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\.OGV" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\.QT" />
-                <data android:pathPattern=".*\\..*\\..*\\..*\\.TORRENT" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\.VOB" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\.WEBM" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\.WTV" />
@@ -905,7 +894,6 @@
                 <data android:pathPattern=".*\\..*\\..*\\..*\\.ogv" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\.ogx" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\.qt" />
-                <data android:pathPattern=".*\\..*\\..*\\..*\\.torrent" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\.vob" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\.webm" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\.wtv" />
@@ -933,7 +921,6 @@
                 <data android:pathPattern=".*\\..*\\..*\\.MTV" />
                 <data android:pathPattern=".*\\..*\\..*\\.OGV" />
                 <data android:pathPattern=".*\\..*\\..*\\.QT" />
-                <data android:pathPattern=".*\\..*\\..*\\.TORRENT" />
                 <data android:pathPattern=".*\\..*\\..*\\.VOB" />
                 <data android:pathPattern=".*\\..*\\..*\\.WEBM" />
                 <data android:pathPattern=".*\\..*\\..*\\.WTV" />
@@ -955,7 +942,6 @@
                 <data android:pathPattern=".*\\..*\\..*\\.ogv" />
                 <data android:pathPattern=".*\\..*\\..*\\.ogx" />
                 <data android:pathPattern=".*\\..*\\..*\\.qt" />
-                <data android:pathPattern=".*\\..*\\..*\\.torrent" />
                 <data android:pathPattern=".*\\..*\\..*\\.vob" />
                 <data android:pathPattern=".*\\..*\\..*\\.webm" />
                 <data android:pathPattern=".*\\..*\\..*\\.wtv" />
@@ -983,7 +969,6 @@
                 <data android:pathPattern=".*\\..*\\.MTV" />
                 <data android:pathPattern=".*\\..*\\.OGV" />
                 <data android:pathPattern=".*\\..*\\.QT" />
-                <data android:pathPattern=".*\\..*\\.TORRENT" />
                 <data android:pathPattern=".*\\..*\\.VOB" />
                 <data android:pathPattern=".*\\..*\\.WEBM" />
                 <data android:pathPattern=".*\\..*\\.WTV" />
@@ -1005,7 +990,6 @@
                 <data android:pathPattern=".*\\..*\\.ogv" />
                 <data android:pathPattern=".*\\..*\\.ogx" />
                 <data android:pathPattern=".*\\..*\\.qt" />
-                <data android:pathPattern=".*\\..*\\.torrent" />
                 <data android:pathPattern=".*\\..*\\.vob" />
                 <data android:pathPattern=".*\\..*\\.webm" />
                 <data android:pathPattern=".*\\..*\\.wtv" />
@@ -1033,7 +1017,6 @@
                 <data android:pathPattern=".*\\.MTV" />
                 <data android:pathPattern=".*\\.OGV" />
                 <data android:pathPattern=".*\\.QT" />
-                <data android:pathPattern=".*\\.TORRENT" />
                 <data android:pathPattern=".*\\.VOB" />
                 <data android:pathPattern=".*\\.WEBM" />
                 <data android:pathPattern=".*\\.WTV" />
@@ -1055,7 +1038,6 @@
                 <data android:pathPattern=".*\\.ogv" />
                 <data android:pathPattern=".*\\.ogx" />
                 <data android:pathPattern=".*\\.qt" />
-                <data android:pathPattern=".*\\.torrent" />
                 <data android:pathPattern=".*\\.vob" />
                 <data android:pathPattern=".*\\.webm" />
                 <data android:pathPattern=".*\\.wtv" />
@@ -1162,7 +1144,6 @@
             android:theme="@style/Theme.HelpOverlay" />
 
         <service android:name="com.archos.mediacenter.filecoreextension.upnp2.NovaUpnpService" />
-        <service android:name=".browser.TorrentObserverService" />
         <service
             android:name=".player.PlaybackNotificationConditionProvider"
             android:enabled="@bool/playback_notification_rules_supported"
@@ -1368,107 +1349,6 @@
         <activity
             android:name=".info.VideoInfoPosterBackdropActivity"
             android:theme="@style/ArchosThemeBlue" />
-        <activity
-            android:name=".player.TorrentLoaderActivity"
-            android:exported="true"
-            android:theme="@style/Theme.Transparent">
-            <intent-filter android:autoVerify="false">
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data android:scheme="http" />
-                <data android:host="*" />
-                <data android:pathPattern=".*\\.torrent" />
-            </intent-filter>
-            <intent-filter android:autoVerify="false">
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data android:scheme="https" />
-                <data android:host="*" />
-                <data android:pathPattern=".*\\.torrent" />
-            </intent-filter>
-            <intent-filter android:autoVerify="false">
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data
-                    android:host="*"
-                    android:mimeType="*/*"
-                    android:pathPattern=".*\\.torrent"
-                    android:scheme="http" />
-            </intent-filter>
-            <intent-filter android:autoVerify="false">
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data
-                    android:host="*"
-                    android:mimeType="*/*"
-                    android:pathPattern=".*\\.torrent"
-                    android:scheme="https" />
-            </intent-filter>
-            <intent-filter android:autoVerify="false">
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data
-                    android:host="*"
-                    android:mimeType="application/x-bittorrent"
-                    android:scheme="http" />
-            </intent-filter>
-            <intent-filter android:autoVerify="false">
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data
-                    android:host="*"
-                    android:mimeType="application/x-bittorrent"
-                    android:scheme="https" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-
-                <data
-                    android:host="*"
-                    android:mimeType="*/*"
-                    android:pathPattern=".*\\.torrent"
-                    android:scheme="file" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data android:mimeType="application/x-bittorrent" />
-                <data
-                    android:mimeType="application/x-bittorrent"
-                    android:scheme="file" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data android:scheme="magnet" />
-            </intent-filter>
-        </activity>
         <activity
             android:name=".utils.FolderPicker"
             android:exported="true"

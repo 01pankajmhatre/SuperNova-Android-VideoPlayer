@@ -409,6 +409,30 @@ public class MainActivity extends BrowserActivity implements ExternalPlayerWithR
         }
 
         getSupportFragmentManager().addOnBackStackChangedListener(this::updateSourceActionBar);
+        getSupportFragmentManager().registerFragmentLifecycleCallbacks(
+                new androidx.fragment.app.FragmentManager.FragmentLifecycleCallbacks() {
+                    @Override
+                    public void onFragmentViewCreated(androidx.fragment.app.FragmentManager fm,
+                            androidx.fragment.app.Fragment f, View v, Bundle savedInstanceState) {
+                        if (f.getId() == R.id.content && isHomeStyleFragment(f))
+                            v.setBackgroundColor(com.archos.mediacenter.video.browser.presenter.PhoneCardStyle.pageColor(MainActivity.this));
+                    }
+
+                    @Override
+                    public void onFragmentResumed(androidx.fragment.app.FragmentManager fm, androidx.fragment.app.Fragment f) {
+                        if (f.getId() == R.id.content) postHomeBarUpdate();
+                    }
+
+                    @Override
+                    public void onFragmentViewDestroyed(androidx.fragment.app.FragmentManager fm, androidx.fragment.app.Fragment f) {
+                        if (f.getId() == R.id.content) postHomeBarUpdate();
+                    }
+                }, false);
+        // pages opened and closed with the back stack: re-evaluate the action bar style once the change is done
+        getSupportFragmentManager().addOnBackStackChangedListener(() -> {
+            View bar = findViewById(R.id.main_toolbar);
+            if (bar != null) bar.post(this::updatePhoneHomeActionBar);
+        });
         updateSourceActionBar();
 
         // determine if display has cutouts
@@ -1043,24 +1067,6 @@ public class MainActivity extends BrowserActivity implements ExternalPlayerWithR
                 .show();
     }
 
-    /** Settings > TV show details page: standard episode page, or page 2 (the movie page 3 style). */
-    void showTvShowDetailsStylePicker() {
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-        new androidx.appcompat.app.AlertDialog.Builder(this)
-                .setTitle(R.string.tvshow_details_style)
-                .setSingleChoiceItems(new CharSequence[]{getString(R.string.tvshow_details_style_standard),
-                        getString(R.string.tvshow_details_style_page2)},
-                        com.archos.mediacenter.video.info.VideoInfoActivity.isTvShowPage2Enabled(this) ? 1 : 0,
-                        (dialog, which) -> {
-                            preferences.edit()
-                                    .putBoolean(com.archos.mediacenter.video.info.VideoInfoActivity.PREF_TVSHOW_DETAILS_PAGE2, which == 1)
-                                    .apply();
-                            dialog.dismiss();
-                        })
-                .setNegativeButton(android.R.string.cancel, null)
-                .show();
-    }
-
     void showPosterTapPicker() {
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
         new androidx.appcompat.app.AlertDialog.Builder(this)
@@ -1110,6 +1116,51 @@ public class MainActivity extends BrowserActivity implements ExternalPlayerWithR
         toolbar.setVisibility(View.VISIBLE);
     }
 
+    /** Movies / TV shows grid pages ask for a refresh of the action bar; the style itself follows the page shown in the content area. */
+    public void setHomeStyleToolbar(boolean on, Object owner) {
+        updatePhoneHomeActionBar();
+    }
+
+    /** Pages that use the Home background and action bar: Movies, TV shows, All videos, Recently added, Played, storages, network. */
+    private static boolean isHomeStyleFragment(androidx.fragment.app.Fragment f) {
+        if (f instanceof com.archos.mediacenter.video.browser.BrowserByIndexedVideos.CursorBrowserByVideo
+                && ((com.archos.mediacenter.video.browser.BrowserByIndexedVideos.CursorBrowserByVideo) f).isHomeStylePage())
+            return true;
+        return f instanceof com.archos.mediacenter.video.browser.BrowserByIndexedVideos.BrowserAllVideos
+                || f instanceof com.archos.mediacenter.video.browser.BrowserByIndexedVideos.BrowserLastAdded
+                || f instanceof com.archos.mediacenter.video.browser.BrowserByIndexedVideos.BrowserLastPlayed
+                || f instanceof com.archos.mediacenter.video.browser.filebrowsing.BrowserByFolder      // internal / external storage, USB, network folders
+                || f instanceof com.archos.mediacenter.video.browser.filebrowsing.network.NewRootFragment
+                || f instanceof com.archos.mediacenter.video.browser.filebrowsing.network.NetworkHubFragment;
+    }
+
+    /**
+     * Fragments call this on resume instead of painting the theme colour on the action bar themselves:
+     * on the phone the activity chooses between the Home colour and the theme colour.
+     */
+    public static void applyThemeToolbarColor(android.app.Activity activity) {
+        if (!(activity instanceof androidx.appcompat.app.AppCompatActivity)) return;
+        final androidx.appcompat.app.AppCompatActivity compat = (androidx.appcompat.app.AppCompatActivity) activity;
+        if (compat.getSupportActionBar() == null) return;
+        if (compat instanceof MainActivity && ((MainActivity) compat).isPhoneHome()) {
+            ((MainActivity) compat).updatePhoneHomeActionBar();
+            return;
+        }
+        compat.getSupportActionBar().setBackgroundDrawable(
+                new android.graphics.drawable.ColorDrawable(ThemeManager.getInstance(compat).getToolbarBackgroundColor()));
+    }
+
+    private void postHomeBarUpdate() {
+        View bar = findViewById(R.id.main_toolbar);
+        if (bar != null) bar.post(this::updatePhoneHomeActionBar);
+    }
+
+    /** True while one of those pages is the one shown in the content area. */
+    private boolean isHomeStyleContentShown() {
+        androidx.fragment.app.Fragment content = getSupportFragmentManager().findFragmentById(R.id.content);
+        return content != null && content.isAdded() && !content.isHidden() && isHomeStyleFragment(content);
+    }
+
     /** Keep the Classic Home background and toolbar consistent. */
     public void updatePhoneHomeActionBar() {
         if (!isPhoneHome() || getSupportActionBar() == null) return;
@@ -1132,10 +1183,11 @@ public class MainActivity extends BrowserActivity implements ExternalPlayerWithR
         if (mDrawerLayout != null) mDrawerLayout.setStatusBarBackgroundColor(pageColor);
         MiscUtils.applyStatusBarIconContrast(new androidx.core.view.WindowInsetsControllerCompat(
                 getWindow(), getWindow().getDecorView()), pageColor);
-        int color = homeVisible ? homeColor : ThemeManager.getInstance(this).getToolbarBackgroundColor();
+        final boolean homeStyle = homeVisible || isHomeStyleContentShown();
+        int color = homeStyle ? homeColor : ThemeManager.getInstance(this).getToolbarBackgroundColor();
         getSupportActionBar().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(color));
         toolbar.setBackgroundColor(color);
-        float elevation = homeVisible ? 0f : getResources().getDimension(R.dimen.toolbar_default_elevation);
+        float elevation = homeStyle ? 0f : getResources().getDimension(R.dimen.toolbar_default_elevation);
         getSupportActionBar().setElevation(elevation);
         androidx.core.view.ViewCompat.setElevation(toolbar, elevation);
         updateSourceActionBar();

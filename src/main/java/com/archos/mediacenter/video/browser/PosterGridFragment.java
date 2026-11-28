@@ -191,8 +191,8 @@ public class PosterGridFragment extends Fragment {
             @Override public void onBindViewHolder(@NonNull CardHolder h, int position) {
                 final HomePosterAdapter.Poster p = mShown.get(position);
                 h.name.setText(p.title);
-                h.meta.setText(p.meta);
-                h.meta.setVisibility(TextUtils.isEmpty(p.meta) ? View.GONE : View.VISIBLE);
+                h.meta.setText(TextUtils.isEmpty(p.meta) ? " " : p.meta);
+                h.meta.setVisibility(View.VISIBLE);
                 Uri src = p.poster;
                 if (src != null) Picasso.get().load(src).resize(300, 450).centerCrop().into(h.poster);
                 else { Picasso.get().cancelRequest(h.poster); h.poster.setImageDrawable(null); }
@@ -242,7 +242,7 @@ public class PosterGridFragment extends Fragment {
         poster.setScaleType(ImageView.ScaleType.CENTER_CROP);
         GradientDrawable pbg = new GradientDrawable();
         pbg.setColor(0xFF1F2B44);
-        pbg.setCornerRadius(dp(10));
+        pbg.setCornerRadius(0f);
         poster.setBackground(pbg);
         poster.setClipToOutline(true);
         card.addView(poster, new LinearLayout.LayoutParams(-1, -2));
@@ -250,7 +250,7 @@ public class PosterGridFragment extends Fragment {
         name.setTextColor(Color.WHITE);
         name.setTextSize(12);
         name.setTypeface(null, Typeface.BOLD);
-        name.setMaxLines(2);
+        name.setLines(2);   // fixed height so rows never overlap
         name.setEllipsize(TextUtils.TruncateAt.END);
         name.setPadding(dp(2), dp(6), dp(2), 0);
         card.addView(name);

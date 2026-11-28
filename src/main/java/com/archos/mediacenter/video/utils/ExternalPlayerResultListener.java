@@ -27,7 +27,6 @@ import android.os.Bundle;
 import com.archos.environment.ArchosUtils;
 import com.archos.mediacenter.utils.videodb.IndexHelper;
 import com.archos.mediacenter.utils.videodb.VideoDbInfo;
-import com.archos.mediacenter.video.browser.TorrentObserverService;
 import com.archos.mediacenter.video.player.ExternalPlayerService;
 import com.archos.mediacenter.video.player.PrivateMode;
 import com.archos.mediaprovider.video.VideoStore;
@@ -161,8 +160,6 @@ public class ExternalPlayerResultListener implements ExternalPlayerWithResultSta
                         mVideoDbInfo.duration = mDuration;
                     mIndexHelper.writeVideoInfo(mVideoDbInfo, true);
                 }
-                TorrentObserverService.staticExitProcess();
-                TorrentObserverService.killProcess();
                 if (isFinished) markWatchedIfComplete(100);
                 else markWatchedIfComplete(getPercentProgress(position));
             } else { // case already treated by return

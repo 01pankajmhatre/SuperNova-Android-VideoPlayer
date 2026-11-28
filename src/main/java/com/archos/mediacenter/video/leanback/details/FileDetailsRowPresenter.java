@@ -176,10 +176,7 @@ public class FileDetailsRowPresenter extends FullWidthRowPresenter implements Ba
         VideoMetadata videoMetadata = videoObject.getMetadata();
         if (videoMetadata==null) {
             hideAudioVideoSubs(vh);
-            if(!((FileDetailsRow) item).shouldHideLoadingAndMetadata())
-                vh.mProgress.setVisibility(View.VISIBLE);
-            else
-                vh.mProgress.setVisibility(View.GONE);
+            vh.mProgress.setVisibility(View.VISIBLE);
             return;
         }
 

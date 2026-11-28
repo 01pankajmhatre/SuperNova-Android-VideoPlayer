@@ -139,7 +139,6 @@
     <!-- Add a space after the right quote
     because the right part of the quote is
     not visible otherwise -->
-    <!-- torrent -->
     <!-- Shortcuts -->
     <string name="ssh_password">ପାସ୍‌ୱର୍ଡ଼</string>
     <string name="ssh_username">ଉପଭୋକ୍ତା ନାମ</string>
@@ -188,7 +187,6 @@
     <string name="codepage_extra_1256">(CP୧୨୫୬)</string>
     <string name="codepage_extra_1257">(CP୧୨୫୭)</string>
     <string name="codepage_extra_1258">(CP୧୨୫୮)</string>
-    <string name="blocklist_unknown_error">ଅଜ୍ଞାତ</string>
     <string name="share_path">ପଥ</string>
     <!-- Combined sign-in summary: "Signed in · <sync status>" -->
     <string name="show_all">ସବୁ ଵିଡ଼ିଓ</string>

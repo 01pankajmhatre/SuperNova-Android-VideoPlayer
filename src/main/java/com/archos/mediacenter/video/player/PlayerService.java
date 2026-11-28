@@ -59,7 +59,6 @@ import com.archos.mediacenter.utils.videodb.VideoDbInfo;
 import com.archos.mediacenter.video.CustomApplication;
 import com.archos.mediacenter.video.R;
 import com.archos.mediacenter.video.browser.BootupRecommandationService;
-import com.archos.mediacenter.video.browser.TorrentObserverService;
 import com.archos.mediacenter.video.browser.adapters.object.Video;
 import com.archos.mediacenter.video.browser.subtitlesmanager.SubtitleManager;
 import com.archos.mediacenter.video.leanback.channels.ChannelManager;
@@ -263,8 +262,6 @@ public class PlayerService extends Service implements Player.Listener, IndexHelp
     public static final int LAST_POSITION_UNKNOWN = -1;
     public static final int LAST_POSITION_END = -2;
 
-    public static final String KEY_ORIGINAL_TORRENT_URL = "original_torrent_uri";
-
     private static final String KEY_HIDE_SUBTITLES = "subtitles_hide_default";
     private static final String KEY_SHOW_FULL_SUBTITLES_FOR_LOCAL_AUDIO = "subtitles_show_full_for_local_audio";
     private static final String KEY_NETWORK_BOOKMARKS = "network_bookmarks";
@@ -334,69 +331,6 @@ public class PlayerService extends Service implements Player.Listener, IndexHelp
     public void setSeeking(boolean seek) {
         isSeeking = seek;
     }
-
-    /* Torrent */
-
-
-    private TorrentObserverService mTorrent;
-    private int mTorrentFilePosition;
-    private String mTorrentURL;
-    private ServiceConnection mTorrentObserverServiceConnection = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName arg0, IBinder binder) {
-            mTorrent  =  ((TorrentObserverService.TorrentServiceBinder) binder).getService();
-            mTorrent.setParameters(mTorrentURL, mTorrentFilePosition);
-            mTorrent.setObserver(mTorrentThreadObserver);
-            mTorrent.start();
-            // start();
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName arg0) {
-            mTorrent = null;
-        }
-    };
-
-
-    private TorrentObserverService.TorrentThreadObserver mTorrentThreadObserver = new TorrentObserverService.TorrentThreadObserver() {
-        @Override
-        public void setPort(int port) {
-            if(mIntent.getData()!=null){
-                mStreamingUri = Uri.parse("http://localhost:"+port+mIntent.getData().getPath());
-            }
-        } // we have to get the new port
-
-        @Override
-        public void setFilesList(ArrayList<String> files) {
-            mTorrent.selectFile(mTorrentFilePosition);
-        }
-
-        @Override
-        public void notifyDaemonStreaming() {
-            mHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    onDataUriOK();
-                }
-            });
-        }
-
-        @Override
-        public void onEndOfTorrentProcess() {
-        }
-
-        @Override
-        public void notifyObserver(String daemonString) {
-            if(mPlayerFrontend!=null)
-                mPlayerFrontend.onTorrentUpdate(daemonString);
-        }
-
-        @Override
-        public void warnOnNotEnoughSpace() {
-            if(mPlayerFrontend!=null)
-                mPlayerFrontend.onTorrentNotEnoughSpace();
-        }
-    };
 
     /* Everything to update playmode */
 
@@ -588,10 +522,6 @@ public class PlayerService extends Service implements Player.Listener, IndexHelp
         intent.removeExtra(ExternalResumeIntent.EXTERNAL_PLAYER_LAUNCH);
 
         mUri = intent.getData();
-        mTorrentURL = mIntent.getStringExtra(PlayerActivity.KEY_TORRENT_URL);
-        if(mIntent.hasExtra(KEY_ORIGINAL_TORRENT_URL)){
-            mUri = Uri.parse(mIntent.getStringExtra(KEY_ORIGINAL_TORRENT_URL));
-        }
         mUri = Uri.parse(removeFileSlashSlash(mUri.toString())); // we need to remove "file://"
 
         boolean hasCurrentSession = mPlaybackSession.uri != null;
@@ -656,7 +586,6 @@ public class PlayerService extends Service implements Player.Listener, IndexHelp
             mPlayerFrontend.setUri(mUri, mStreamingUri);
         mVideoId = intent.getIntExtra("id", -1);
         if (log.isDebugEnabled()) log.debug("onStart mVideoId={}", mVideoId);
-        mTorrentFilePosition = mIntent.getIntExtra(PlayerActivity.KEY_TORRENT, -1);
 
         // when mVideoInfo uri is the same as intent uri -> info has already been retrieved !
         if(mVideoInfo!=null&&mVideoInfo.uri.equals(mUri)){
@@ -680,21 +609,7 @@ public class PlayerService extends Service implements Player.Listener, IndexHelp
             mAudioSpeed = getAudioSpeedFromPreferences();
             if (log.isDebugEnabled()) log.debug("onStart: mAudioSpeed={}", mAudioSpeed);
         }
-        if(mTorrentFilePosition>=0){
-            mCallOnDataUriOKWhenVideoInfoIsSet = false;
-            mPlayer.setIsTorrent(true);
-            mPlayer.stayAwake(true);
-            if(mTorrent==null){
-                Intent connectionIntent = new Intent(this, TorrentObserverService.class);
-                bindService(connectionIntent, mTorrentObserverServiceConnection,
-                        Context.BIND_AUTO_CREATE);
-            }
-            else {
-                mTorrent.setObserver(mTorrentThreadObserver);
-                mTorrent.start();
-            }
-        }
-        else if(!"content".equals(mUri.getScheme()))
+        if(!"content".equals(mUri.getScheme()))
             onDataUriOK();
         else if(mVideoId==-1){
             Uri correctedUri = FileUtils.getRealUriFromVideoURI(this,mUri);
@@ -710,7 +625,7 @@ public class PlayerService extends Service implements Player.Listener, IndexHelp
         //CustomApplication.setLastVideoPlayedId(mVideoId);
         //CustomApplication.setLastVideoPlayedUri(mUri);
 
-        mSkipDatabase = externalPlayerLaunch && mTorrentFilePosition < 0;
+        mSkipDatabase = externalPlayerLaunch;
         if (mSkipDatabase) mDatabaseInfoHasBeenRetrieved = true;
         // The service decides for every new playback: a fresh launch from the app can never inherit "external" from an earlier video
         if (!continuingSession) PrivateMode.setExternalSession(externalPlayerLaunch);
@@ -1005,8 +920,7 @@ public class PlayerService extends Service implements Player.Listener, IndexHelp
 
     private void onStreamingUriOK() {
         if (log.isDebugEnabled()) log.debug("onStreamingUriOK");
-        if(mTorrentFilePosition==-1)
-            prepareSubs();
+        prepareSubs();
         if(mPlayerFrontend!=null)
             mPlayerFrontend.setUri(mUri, mStreamingUri);
         final int generation = ++mSourceRequestGeneration;
@@ -1067,14 +981,9 @@ public class PlayerService extends Service implements Player.Listener, IndexHelp
 
         void onEnd();
 
-        void onTorrentUpdate(String daemonString);
-
-        void onTorrentNotEnoughSpace();
-
         void onFrontendDetached();
 
         void onFirstPlay();
-        // mHandler.sendMessage(mHandler.obtainMessage(MSG_TORRENT_STARTED));
 
         // Called on the main thread once intro/outro segments have been fetched, so the
         // UI (e.g. the Play mode tile summary) can refresh if it is already displayed.
@@ -1270,8 +1179,6 @@ public class PlayerService extends Service implements Player.Listener, IndexHelp
             mPlayer.pause(PlayerController.STATE_OTHER);
             mPlayer.stopPlayback();
             mPlayerState = PlayerState.STOPPED;
-            TorrentObserverService.staticExitProcess();
-            TorrentObserverService.killProcess();
             if (!PrivateMode.isHistoryOff()) {
                 stopNowPlayingCard();
             }
@@ -1514,7 +1421,7 @@ public class PlayerService extends Service implements Player.Listener, IndexHelp
         }
         if(mCallOnDataUriOKWhenVideoInfoIsSet)
             onDataUriOK();
-        else //when onDataUriOk has been called or when torrent file
+        else //when onDataUriOk has been called
             postPreparedAndVideoDb();
     }
     @Override
@@ -1536,10 +1443,6 @@ public class PlayerService extends Service implements Player.Listener, IndexHelp
         if (log.isDebugEnabled()) log.debug("onDestroy: unregister headsetPluggedReceiver");
         unregisterReceiver(headsetPluggedReceiver);
         sPlayerService=null;
-        if(mTorrent!=null)
-            try {
-                unbindService(mTorrentObserverServiceConnection);
-            }catch(java.lang.IllegalArgumentException e) {}
         if (log.isDebugEnabled()) log.debug("onDestroy");
     }
 

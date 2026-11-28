@@ -127,9 +127,38 @@ abstract public class CursorBrowserByVideo extends BrowserByVideoObjects impleme
     protected void refresh(){
         mBrowserAdapter.notifyDataSetChanged();
     }
+    /** Phone grid pages (Movies, TV shows) use the Home action bar colour. */
+    protected boolean usesHomeStyle() {
+        return false;
+    }
+
+    public boolean isHomeStylePage() {
+        return usesHomeStyle();
+    }
+
+    private void applyHomeStyle(boolean on) {
+        if (usesHomeStyle() && getActivity() instanceof com.archos.mediacenter.video.browser.MainActivity)
+            ((com.archos.mediacenter.video.browser.MainActivity) getActivity()).setHomeStyleToolbar(on, this);
+    }
+
+    @Override
+    public void onHiddenChanged(boolean hidden) {
+        super.onHiddenChanged(hidden);
+        applyHomeStyle(!hidden);
+    }
+
+    @Override
+    public void onDestroyView() {
+        applyHomeStyle(false);   // the page is leaving; staying on the page (opening details) keeps the Home bar
+        super.onDestroyView();
+    }
+
     @Override
     public void onResume() {
         super.onResume();
+        applyHomeStyle(true);
+        if (getView() != null && usesHomeStyle())   // re-apply after anything else restyled the bar while resuming
+            getView().post(() -> { if (isResumed() && !isHidden()) applyHomeStyle(true); });
         if (mCursor != null && !mCursor.isClosed())
 	        bindAdapter();
         LoaderManager.getInstance(this).restartLoader(0, null, this);

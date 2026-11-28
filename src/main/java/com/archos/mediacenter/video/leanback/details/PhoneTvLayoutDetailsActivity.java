@@ -6,7 +6,6 @@ import android.view.KeyEvent;
 import androidx.fragment.app.Fragment;
 
 import com.archos.mediacenter.video.R;
-import com.archos.mediacenter.video.browser.TorrentObserverService;
 import com.archos.mediacenter.video.leanback.LeanbackActivity;
 
 /**
@@ -19,20 +18,6 @@ public class PhoneTvLayoutDetailsActivity extends LeanbackActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.phone_tv_layout_details_activity);
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-        if (getIntent().getBooleanExtra(VideoDetailsFragment.EXTRA_LAUNCHED_FROM_PLAYER, false))
-            TorrentObserverService.paused(this);
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        if (getIntent().getBooleanExtra(VideoDetailsFragment.EXTRA_LAUNCHED_FROM_PLAYER, false))
-            TorrentObserverService.resumed(this);
     }
 
     @Override
